@@ -8,11 +8,12 @@ API REST de la plataforma Joyería KOB, construida con Express 5, TypeScript 6 y
 
 Antes de clonar el repositorio, asegúrate de tener instaladas estas versiones exactas en tu máquina:
 
-| Herramienta | Versión requerida  | Verificar con   |
-| ----------- | ------------------ | --------------- |
-| Node.js     | v22.19.0           | `node -v`       |
-| npm         | v10.9.3            | `npm -v`        |
-| Git         | Cualquier reciente | `git --version` |
+| Herramienta | Versión requerida  | Verificar con     |
+| ----------- | ------------------ | ----------------- |
+| Node.js     | v22.19.0           | `node -v`         |
+| npm         | v10.9.3            | `npm -v`          |
+| MySQL       | v8.0+              | `mysql --version` |
+| Git         | Cualquier reciente | `git --version`   |
 
 > Si tu versión de Node no coincide, usa [nvm-windows](https://github.com/coreybutler/nvm-windows) (Windows) o [nvm](https://github.com/nvm-sh/nvm) (Mac/Linux) para cambiar de versión sin afectar otros proyectos.
 
@@ -66,7 +67,7 @@ Abre el archivo `.env` recién creado y completa los valores según tu entorno l
 
 ```env
 PORT=4000
-DB_URL=          # URL de conexión a la base de datos
+DB_URL=mysql://usuario:contraseña@localhost:3306/joyeria_kob
 JWT_SECRET=      # Clave secreta para firmar los tokens JWT
 ```
 
@@ -91,13 +92,17 @@ El servidor quedará corriendo en `http://localhost:4000`.
 
 ## Scripts disponibles
 
-| Comando          | Descripción                                                                       |
-| ---------------- | --------------------------------------------------------------------------------- |
-| `npm run dev`    | Inicia el servidor con `nodemon` — se reinicia automáticamente al guardar cambios |
-| `npm run build`  | Compila TypeScript a JavaScript plano en la carpeta `/dist`                       |
-| `npm run start`  | Ejecuta el build compilado (usar en producción)                                   |
-| `npm run lint`   | Analiza el código con ESLint y reporta errores                                    |
-| `npm run format` | Formatea automáticamente todos los archivos `src/**/*.ts`                         |
+| Comando                   | Descripción                                                                       |
+| ------------------------- | --------------------------------------------------------------------------------- |
+| `npm run dev`             | Inicia el servidor con `nodemon` — se reinicia automáticamente al guardar cambios |
+| `npm run build`           | Compila TypeScript a JavaScript plano en la carpeta `/dist`                       |
+| `npm run start`           | Ejecuta el build compilado (usar en producción)                                   |
+| `npm run lint`            | Analiza el código con ESLint y reporta errores                                    |
+| `npm run format`          | Formatea automáticamente todos los archivos `src/**/*.ts`                         |
+| `npm run db:setup`        | Configura la base de datos: genera cliente, ejecuta migraciones y siembra datos   |
+| `npm run prisma:generate` | Genera el cliente de Prisma desde el esquema                                      |
+| `npm run prisma:migrate`  | Ejecuta las migraciones de base de datos                                          |
+| `npm run prisma:seed`     | Siembra la base de datos con datos iniciales                                      |
 
 ---
 
@@ -108,6 +113,8 @@ El servidor quedará corriendo en `http://localhost:4000`.
 | Node.js            | v22.19.0 | Entorno de ejecución                         |
 | TypeScript         | ^6.0.2   | Tipado estático                              |
 | Express            | ^5.2.1   | Framework HTTP                               |
+| Prisma             | ^4.16.2  | ORM para base de datos                       |
+| MySQL              | v8.0+    | Base de datos relacional                     |
 | swagger-jsdoc      | ^6.2.8   | Genera la spec OpenAPI desde anotaciones     |
 | swagger-ui-express | ^5.0.1   | Sirve la UI interactiva de Swagger           |
 | Axios              | ^1.14.0  | Cliente HTTP para consumo de APIs externas   |
@@ -123,6 +130,9 @@ El servidor quedará corriendo en `http://localhost:4000`.
 ## Estructura de carpetas
 
 ```
+prisma/
+├── schema.prisma    # Esquema de la base de datos y configuración de Prisma
+└── seed.ts          # Script para sembrar datos iniciales
 src/
 ├── api/
 │   ├── app.ts              # Configuración de Express, middlewares y registro de rutas
@@ -130,6 +140,12 @@ src/
 ├── config/
 │   └── swagger.config.ts   # Configuración central de Swagger/OpenAPI
 ├── features/               # Módulos de negocio — uno por cada dominio
+│   ├── categories/         # Gestión de categorías jerárquicas
+│   │   ├── controllers/    # Maneja Request/Response, llama al facade
+│   │   ├── facade/         # Lógica de negocio con validaciones
+│   │   ├── services/       # Interacción con la base de datos via Prisma
+│   │   ├── models/         # Interfaces y tipos del dominio
+│   │   └── routes.ts       # Define endpoints y contiene anotaciones @openapi
 │   ├── products/           # Ejemplo: gestión de joyas del catálogo
 │   │   ├── controllers/    # Maneja Request/Response, llama al service
 │   │   ├── services/       # Lógica de negocio pura (cálculos, validaciones, DB)
@@ -254,6 +270,66 @@ El patrón `**/routes.ts` ya cubre automáticamente cualquier `routes.ts` dentro
 import orderRouter from '../features/orders/routes';
 app.use('/api/orders', orderRouter);
 ```
+
+---
+
+## Configuración de la base de datos con Prisma
+
+Este proyecto utiliza Prisma como ORM para interactuar con MySQL. Prisma maneja las migraciones, el esquema de la base de datos y la generación de tipos TypeScript.
+
+### Primeros pasos con la base de datos
+
+Después de configurar el `.env` con `DB_URL`, ejecuta:
+
+```bash
+# 1. Generar el cliente de Prisma (necesario después de cambiar el esquema)
+npm run prisma:generate
+
+# 2. Ejecutar migraciones para crear las tablas
+npm run prisma:migrate
+
+# 3. (Opcional) Sembrar datos iniciales
+npm run prisma:seed
+```
+
+O usa el comando combinado:
+
+```bash
+npm run db:setup
+```
+
+### Esquema de la base de datos
+
+El esquema está definido en `prisma/schema.prisma`. Incluye modelos para categorías jerárquicas y está configurado para MySQL.
+
+### Comandos útiles de Prisma
+
+- `npx prisma studio`: Abre una interfaz web para explorar la base de datos
+- `npx prisma db push`: Sincroniza el esquema con la base de datos (desarrollo)
+- `npx prisma migrate dev`: Crea y aplica una nueva migración
+- `npx prisma generate`: Regenera el cliente después de cambios en el esquema
+
+---
+
+## Módulo de categorías
+
+La carpeta `src/features/categories/` contiene la implementación completa del módulo de categorías usando Prisma como ORM y MySQL como base de datos. Incluye operaciones CRUD completas con soporte para jerarquía de categorías (padre-hijo).
+
+| Endpoint              | Método   | Descripción                  |
+| --------------------- | -------- | ---------------------------- |
+| `/api/categories`     | `GET`    | Listar todas las categorías  |
+| `/api/categories/:id` | `GET`    | Obtener una categoría por ID |
+| `/api/categories`     | `POST`   | Crear una nueva categoría    |
+| `/api/categories/:id` | `PUT`    | Actualizar una categoría     |
+| `/api/categories/:id` | `DELETE` | Eliminar una categoría       |
+
+Este módulo demuestra la arquitectura completa del proyecto con:
+
+- **Controller**: Maneja las peticiones HTTP y delega lógica al facade
+- **Facade**: Capa de lógica de negocio con validaciones y manejo de errores
+- **Service**: Interacción directa con la base de datos usando Prisma
+- **Model**: Definición de tipos TypeScript
+- **Routes**: Definición de endpoints con documentación OpenAPI/Swagger
 
 ---
 

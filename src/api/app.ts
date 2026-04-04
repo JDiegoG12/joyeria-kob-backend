@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from '../config/swagger.config';
 import productRouter from '../features/products/routes';
+import categoryRouter from '../features/categories/routes';
 
 /**
  * Instancia principal de la aplicación Express para la Joyería KOB.
@@ -16,6 +17,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Rutas de la API
 app.use('/api/products', productRouter);
+app.use('/api/categories', categoryRouter);
 
 /**
  * @openapi
@@ -41,10 +43,10 @@ app.use('/api/products', productRouter);
  *                   example: API de Joyería KOB funcionando correctamente
  */
 app.get('/', (req: Request, res: Response) => {
-    res.json({
-        success: true,
-        message: 'API de Joyería KOB funcionando correctamente 💎',
-    });
+  res.json({
+    success: true,
+    message: 'API de Joyería KOB funcionando correctamente 💎',
+  });
 });
 
 export default app;
