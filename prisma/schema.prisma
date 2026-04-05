@@ -23,7 +23,7 @@ datasource db {
 // ------------------------------
 model Category {
   id          Int      @id @default(autoincrement())
-  name        String   @db.VarChar(50)       // Nombre de la categoría (ej: "Cadena")
+  name        String   @db.VarChar(50) // Nombre de la categoría (ej: "Cadena")
   slug        String   @unique @db.VarChar(50) // Identificador único para URL (ej: "cadena-trenzada")
   description String?  @db.Text               // Descripción opcional
   parentId    Int?                            // ID de la categoría padre (NULL si es raíz)
@@ -35,5 +35,6 @@ model Category {
 
   // Índices para mejorar rendimiento en consultas jerárquicas
   @@index([parentId])
+  @@unique([parentId, name], name: "unique_parent_name") // Unicidad compuesta
   @@map("categories")
 }

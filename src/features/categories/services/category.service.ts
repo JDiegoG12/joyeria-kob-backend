@@ -1,6 +1,5 @@
-import { PrismaClient, Category, Prisma } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { Category, Prisma } from '@prisma/client';
+import { prisma } from '../../../config/prisma';
 
 export type CreateCategoryInput = {
   name: string;
@@ -86,4 +85,40 @@ export const deleteCategory = async (id: number): Promise<boolean> => {
 
     throw error;
   }
+};
+
+/**
+ * Busca una categoría por nombre y opcionalmente por su padre (case-insensitive).
+ * @param name - El nombre de la categoría a buscar.
+ * @param parentId - El ID de la categoría padre (null para categorías raíz).
+ * @returns La categoría encontrada o null si no existe.
+ */
+export const findCategoryByNameAndParent = async (
+  name: string,
+  parentId: number | null | undefined,
+): Promise<Category | null> => {
+  return prisma.category.findFirst({
+    where: {
+      name: name,
+      parentId: parentId,
+    },
+  });
+};
+
+/**
+ * Obtiene solo las subcategorías directas de una categoría padre.
+ * @param parentId - El ID de la categoría padre.
+ * @returns Un array de las subcategorías directas.
+ */
+export const getCategoryChildren = async (
+  parentId: number,
+): Promise<CategoryWithRelations[]> => {
+  return await prisma.category.findMany({
+    where: { parentId },
+    orderBy: { name: 'asc' },
+    include: {
+      parent: true,
+      children: true,
+    },
+  });
 };

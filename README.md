@@ -141,13 +141,13 @@ src/
 │   └── swagger.config.ts   # Configuración central de Swagger/OpenAPI
 ├── features/               # Módulos de negocio — uno por cada dominio
 │   ├── categories/         # Gestión de categorías jerárquicas
-│   │   ├── controllers/    # Maneja Request/Response, llama al facade
-│   │   ├── facade/         # Lógica de negocio con validaciones
-│   │   ├── services/       # Interacción con la base de datos via Prisma
-│   │   ├── models/         # Interfaces y tipos del dominio
+│   │   ├── controllers/    # Maneja Request/Response, llama al facade.
+│   │   ├── facade/         # Implementa la interfaz, orquesta la lógica de negocio.
+│   │   ├── ports/          # Define las interfaces (contratos) del módulo.
+│   │   ├── services/       # Lógica de acceso a datos (consultas Prisma).
 │   │   └── routes.ts       # Define endpoints y contiene anotaciones @openapi
 │   ├── products/           # Ejemplo: gestión de joyas del catálogo
-│   │   ├── controllers/    # Maneja Request/Response, llama al service
+│   │   ├── controllers/    # Maneja Request/Response, llama al service.
 │   │   ├── services/       # Lógica de negocio pura (cálculos, validaciones, DB)
 │   │   ├── models/         # Interfaces y tipos del dominio
 │   │   └── routes.ts       # Define endpoints y contiene anotaciones @openapi
@@ -315,36 +315,84 @@ El esquema está definido en `prisma/schema.prisma`. Incluye modelos para catego
 
 La carpeta `src/features/categories/` contiene la implementación completa del módulo de categorías usando Prisma como ORM y MySQL como base de datos. Incluye operaciones CRUD completas con soporte para jerarquía de categorías (padre-hijo).
 
-| Endpoint              | Método   | Descripción                  |
-| --------------------- | -------- | ---------------------------- |
-| `/api/categories`     | `GET`    | Listar todas las categorías  |
-| `/api/categories/:id` | `GET`    | Obtener una categoría por ID |
-| `/api/categories`     | `POST`   | Crear una nueva categoría    |
-| `/api/categories/:id` | `PUT`    | Actualizar una categoría     |
-| `/api/categories/:id` | `DELETE` | Eliminar una categoría       |
+**Este módulo es el ejemplo de referencia para la arquitectura del proyecto.** Demuestra la implementación completa de un feature con conexión a base de datos, validaciones de negocio y documentación.
 
-Este módulo demuestra la arquitectura completa del proyecto con:
+| Endpoint                       | Método   | Descripción                    |
+| ------------------------------ | -------- | ------------------------------ |
+| `/api/categories`              | `GET`    | Listar todas las categorías    |
+| `/api/categories/:id`          | `GET`    | Obtener una categoría por ID   |
+| `/api/categories/:id/children` | `GET`    | Obtener subcategorías directas |
+| `/api/categories`              | `POST`   | Crear una nueva categoría      |
+| `/api/categories/:id`          | `PUT`    | Actualizar una categoría       |
+| `/api/categories/:id`          | `DELETE` | Eliminar una categoría         |
 
-- **Controller**: Maneja las peticiones HTTP y delega lógica al facade
-- **Facade**: Capa de lógica de negocio con validaciones y manejo de errores
-- **Service**: Interacción directa con la base de datos usando Prisma
-- **Model**: Definición de tipos TypeScript
-- **Routes**: Definición de endpoints con documentación OpenAPI/Swagger
+Este módulo demuestra la arquitectura completa del proyecto con las siguientes capas:
+
+- **Controller**: Maneja las peticiones HTTP y delega la lógica al facade.
+- **Facade**: Implementa la interfaz del `port`. Orquesta la lógica de negocio, realiza validaciones y maneja errores.
+- **Port**: Define la interfaz (el contrato) que el facade debe cumplir, permitiendo la inversión de dependencias.
+- **Service**: Contiene la lógica de acceso a datos, interactuando directamente con la base de datos a través de Prisma.
+- **Routes**: Define los endpoints y contiene la documentación OpenAPI/Swagger.
 
 ---
 
-## Módulo de productos — Ejemplo de referencia
+## Pruebas (Testing)
 
-La carpeta `src/features/products/` contiene una implementación completa de ejemplo que ilustra cómo debe estructurarse cualquier módulo del proyecto. Incluye los cuatro patrones fundamentales de una API REST:
+El proyecto utiliza **Jest** como framework de pruebas para garantizar la calidad y el correcto funcionamiento del código. Se incluyen tanto pruebas unitarias como de integración.
 
-| Endpoint            | Método   | Descripción                |
-| ------------------- | -------- | -------------------------- |
-| `/api/products`     | `GET`    | Listar todos los productos |
-| `/api/products/:id` | `GET`    | Obtener un producto por ID |
-| `/api/products`     | `POST`   | Crear un nuevo producto    |
-| `/api/products/:id` | `DELETE` | Eliminar un producto       |
+### Ejecutar las pruebas
 
-> **Importante:** los datos de este módulo son ficticios y se almacenan en memoria (un arreglo en `product.service.ts`). Esto es intencional para que el ejemplo funcione sin necesitar una base de datos configurada. Cuando se implemente el módulo real de productos, el service debe reemplazarse con las consultas reales a la DB. El modelo, el controller y las rutas pueden tomarse como base y ajustarse a las necesidades reales del negocio.
+Para ejecutar toda la suite de pruebas, utiliza el siguiente comando:
+
+```bash
+npm test
+```
+
+Esto buscará todos los archivos con la extensión `.test.ts` y los ejecutará.
+
+### Estructura y Filosofía de Pruebas
+
+- **Pruebas Unitarias**: Se centran en componentes aislados (ej. una función en un `service` o `facade`). Utilizan `mocks` para simular dependencias (como la base de datos) y asegurar que el componente se prueba de forma aislada.
+- **Pruebas de Integración**: Verifican que varios componentes funcionan juntos correctamente. Por ejemplo, simulan una petición HTTP a un endpoint y comprueban la respuesta final, recorriendo todas las capas (controller, facade, service).
+
+Todos los nuevos `features` o correcciones de `bugs` deben ir acompañados de sus respectivas pruebas.
+
+---
+
+## Arquitectura de Puertos y Fachadas
+
+El `feature` de `categories` introduce un patrón de diseño basado en **Puertos y Adaptadores (Ports and Adapters)**, utilizando una **Fachada (Facade)** como punto de entrada a la lógica de negocio. Esta arquitectura promueve un código más limpio, desacoplado y fácil de mantener.
+
+### Puertos (`ports`)
+
+La carpeta `src/features/categories/ports/` define los **contratos** (interfaces de TypeScript) que la lógica de negocio debe cumplir. El archivo clave es `category.ports.ts`, que contiene la interfaz `ICategoryFacade`.
+
+```typescript
+// src/features/categories/ports/category.ports.ts
+
+export interface ICategoryFacade {
+  getAllCategories(): Promise<FacadeResult<CategoryWithRelations[]>>;
+  getCategoryById(id: number): Promise<FacadeResult<CategoryWithRelations>>;
+  createCategory(data: CreateCategoryInput): Promise<FacadeResult<Category>>;
+  // ... y otros métodos
+}
+```
+
+- **¿Qué es un puerto?** Es una definición agnóstica de la tecnología. La interfaz `ICategoryFacade` define "lo que el sistema debe hacer" (el qué), pero no "cómo lo hace".
+- **Beneficio**: Permite que los `controllers` dependan de esta abstracción (`ICategoryFacade`) en lugar de una implementación concreta. Esto facilita las pruebas y permite cambiar la implementación interna sin afectar a los `controllers`.
+
+### Fachada (`facade`)
+
+La carpeta `src/features/categories/facade/` contiene la **implementación** concreta del puerto. El archivo `category.facade.ts` implementa la interfaz `ICategoryFacade`.
+
+- **¿Qué es una fachada?** Es una clase que actúa como punto de entrada único y simplificado a la lógica de negocio de un `feature`. Orquesta las llamadas a uno o más `services`, realiza validaciones de negocio complejas y maneja la lógica de errores.
+- **Flujo de una petición**:
+  1. El `Controller` recibe la petición HTTP.
+  2. El `Controller` llama a un método de la `Facade` (a través de la interfaz del puerto).
+  3. La `Facade` llama al `Service` para interactuar con la base de datos.
+  4. La `Facade` procesa el resultado, maneja posibles errores y lo devuelve al `Controller`.
+
+Este patrón es el preferido para todos los nuevos `features` que contengan lógica de negocio compleja.
 
 ---
 

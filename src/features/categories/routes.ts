@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getAllCategoriesController,
   getCategoryByIdController,
+  getCategoryChildrenController,
   postCategoryController,
   updateCategoryController,
   removeCategoryController,
@@ -161,6 +162,56 @@ router.get('/', getAllCategoriesController);
  *                   example: La categoría solicitada no existe en el catálogo.
  */
 router.get('/:id', getCategoryByIdController);
+
+/**
+ * @openapi
+ * /api/categories/{id}/children:
+ *   get:
+ *     tags:
+ *       - Categorías
+ *     summary: Obtener las subcategorías directas
+ *     description: Retorna un listado de las categorías que son hijas directas de la categoría especificada.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID único de la categoría padre
+ *         example: "1"
+ *     responses:
+ *       200:
+ *         description: Subcategorías encontradas.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Category'
+ *       404:
+ *         description: Categoría padre no encontrada.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: CATEGORY_NOT_FOUND
+ *                 message:
+ *                   type: string
+ *                   example: La categoría padre solicitada no existe.
+ */
+router.get('/:id/children', getCategoryChildrenController);
 
 /**
  * @openapi
