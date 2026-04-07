@@ -449,7 +449,7 @@ Husky valida automáticamente el formato al hacer `git commit`. Un commit con fo
 
 | Elemento              | Formato            | Ejemplo                    |
 | --------------------- | ------------------ | -------------------------- |
-| Carpetas y archivos   | `kebab-case`       | `product-service.ts`       |
+| Carpetas y archivos   | `kebab-case`       | `.ts`                      |
 | Clases e interfaces   | `PascalCase`       | `IProduct`, `OrderService` |
 | Variables y funciones | `camelCase`        | `getProductById`           |
 | Constantes            | `UPPER_SNAKE_CASE` | `MAX_RETRY_LIMIT`          |

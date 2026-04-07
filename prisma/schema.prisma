@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,6 +8,15 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DB_URL")
+}
+
+// ------------------------------
+// Enums
+// ------------------------------
+enum ProductStatus {
+  AVAILABLE
+  OUT_OF_STOCK
+  HIDDEN
 }
 
 // ------------------------------
@@ -23,18 +30,67 @@ datasource db {
 // ------------------------------
 model Category {
   id          Int      @id @default(autoincrement())
-  name        String   @db.VarChar(50) // Nombre de la categoría (ej: "Cadena")
-  slug        String   @unique @db.VarChar(50) // Identificador único para URL (ej: "cadena-trenzada")
-  description String?  @db.Text               // Descripción opcional
-  parentId    Int?                            // ID de la categoría padre (NULL si es raíz)
+  name        String   @db.VarChar(50) 
+  slug        String   @unique @db.VarChar(50) 
+  description String?  @db.Text               
+  parentId    Int?                            
   createdAt   DateTime @default(now()) @map("created_at")
 
-  // Relación autorreferenciada
+  // Relaciones
   parent   Category?  @relation("CategoryToSubcategory", fields: [parentId], references: [id], onDelete: Restrict)
   children Category[] @relation("CategoryToSubcategory")
+  products Product[]  // Relación: Una categoría puede tener muchos productos
 
   // Índices para mejorar rendimiento en consultas jerárquicas
   @@index([parentId])
-  @@unique([parentId, name], name: "unique_parent_name") // Unicidad compuesta
+  @@unique([parentId, name], name: "unique_parent_name") 
   @@map("categories")
+}
+
+// ------------------------------
+// Modelo: Product (Catálogo de Joyas)
+// ------------------------------
+// Implementa el patrón Híbrido: Columnas tipadas para el negocio + JSON para la flexibilidad
+// - id: Usa UUID para mayor seguridad en el frontend
+// - categoryId: Apunta siempre a la categoría/subcategoría más específica
+// - specifications: JSONB que varía según el tipo de joya (tallas, piedras, etc)
+// ------------------------------
+model Product {
+  id              String        @id @default(uuid()) @db.Char(36)
+  categoryId      Int           @map("category_id")
+  name            String        @db.VarChar(100)
+  description     String        @db.Text
+  baseWeight      Decimal       @db.Decimal(10, 2) @map("base_weight")
+  stoneValue      Decimal       @db.Decimal(10, 2) @map("stone_value")
+  laborCost       Decimal       @db.Decimal(10, 2) @map("labor_cost")
+  stock           Int           @default(1)
+  status          ProductStatus @default(AVAILABLE)
+  calculatedPrice Decimal       @db.Decimal(10, 2) @map("calculated_price")
+  
+  // Columnas flexibles nativas de MySQL JSON
+  specifications  Json          
+  images          Json          
+  
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  // Relación con Categoría
+  // Restrict: Evita borrar una categoría si tiene productos asignados
+  category        Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([categoryId])
+  @@index([status]) // Índice útil para filtrar en el catálogo del cliente
+  @@map("products")
+}
+
+// ------------------------------
+// Modelo: SystemSetting (Configuraciones Globales)
+// ------------------------------
+// Almacena variables críticas del sistema (Ej: Precio del oro)
+// ------------------------------
+model SystemSetting {
+  id               Int      @id @default(autoincrement())
+  goldPricePerGram Decimal  @db.Decimal(10, 2) @map("gold_price_per_gram")
+  lastUpdate       DateTime @updatedAt @map("last_update")
+
+  @@map("system_settings")
 }

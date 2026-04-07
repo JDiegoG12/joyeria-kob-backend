@@ -3,6 +3,21 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
+  console.log('🌱 Iniciando la siembra de la base de datos...');
+
+  // 1. Sembrar Configuración del Sistema (Precio del Oro)
+  // Usamos upsert para que si volvemos a correr el seed, no intente duplicar el ID 1
+  await prisma.systemSetting.upsert({
+    where: { id: 1 },
+    update: {}, // Si ya existe, no hace nada
+    create: {
+      id: 1,
+      goldPricePerGram: 350000, // Valor base inicial simulado en COP
+    },
+  });
+  console.log('✅ Precio del oro inicializado.');
+
+  // 2. Sembrar Categorías
   await prisma.category.createMany({
     data: [
       {
@@ -38,13 +53,14 @@ async function main() {
     ],
     skipDuplicates: true,
   });
+  console.log('✅ Categorías iniciales insertadas.');
 
-  console.log('Categorías iniciales insertadas exitosamente.');
+  console.log('🎉 Siembra completada exitosamente.');
 }
 
 main()
   .catch((e) => {
-    console.error('Error en seeding:', e);
+    console.error('❌ Error en seeding:', e);
     process.exit(1);
   })
   .finally(async () => {

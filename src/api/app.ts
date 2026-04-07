@@ -3,6 +3,7 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from '../config/swagger.config';
 import productRouter from '../features/products/routes';
 import categoryRouter from '../features/categories/routes';
+import { errorHandler } from './middlewares/error.middleware';
 
 /**
  * Instancia principal de la aplicación Express para la Joyería KOB.
@@ -48,5 +49,7 @@ app.get('/', (req: Request, res: Response) => {
     message: 'API de Joyería KOB funcionando correctamente 💎',
   });
 });
+
+app.use(errorHandler);
 
 export default app;
