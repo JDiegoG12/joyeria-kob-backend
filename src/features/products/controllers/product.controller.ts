@@ -95,9 +95,9 @@ export const removeProduct = async (
       success: true,
       message: 'Producto eliminado correctamente.',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Si Prisma falla porque el ID no existe
-    if (error.code === 'P2025') {
+    if (error instanceof Error && error.message === 'P2025') {
       res.status(404).json({
         success: false,
         error: 'PRODUCT_NOT_FOUND',

@@ -69,7 +69,7 @@ export const createProductService = async (data: ICreateProductDTO) => {
       stock: data.stock,
       status: initialStatus,
       calculatedPrice: calculatedPrice,
-      specifications: data.specifications as any,
+      specifications: data.specifications as object,
       images: data.images,
     },
   });
