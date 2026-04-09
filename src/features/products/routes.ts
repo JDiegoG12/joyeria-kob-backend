@@ -17,48 +17,90 @@ const router = Router();
  *       properties:
  *         id:
  *           type: string
- *           example: "1"
+ *           format: uuid
+ *           example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+ *         categoryId:
+ *           type: integer
+ *           example: 1
  *         name:
  *           type: string
- *           example: Anillo Esmeralda Colonial
+ *           example: "Anillo Solitario Zafiro Real"
  *         description:
  *           type: string
- *           example: Anillo en oro de 18k con esmeralda colombiana certificada.
- *         priceCop:
+ *           example: "Anillo en oro blanco de 18k con zafiro central."
+ *         baseWeight:
  *           type: number
- *           example: 4500000
- *         material:
- *           type: string
- *           enum: [oro, plata, platino]
- *           example: oro
+ *           example: 4.5
+ *         stoneValue:
+ *           type: number
+ *           example: 1200000
+ *         laborCost:
+ *           type: number
+ *           example: 0
+ *         calculatedPrice:
+ *           type: number
+ *           example: 3225000
  *         stock:
- *           type: number
- *           example: 3
+ *           type: integer
+ *           example: 5
+ *         status:
+ *           type: string
+ *           enum: [AVAILABLE, OUT_OF_STOCK, HIDDEN]
+ *           example: AVAILABLE
+ *         specifications:
+ *           type: object
+ *           example: { "requiresSize": true, "hasStones": true, "stoneType": "Zafiro" }
+ *         images:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["https://res.cloudinary.com/joyeria/image1.jpg"]
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *
  *     ProductInput:
  *       type: object
  *       required:
+ *         - categoryId
  *         - name
  *         - description
- *         - priceCop
- *         - material
+ *         - baseWeight
+ *         - stoneValue
+ *         - laborCost
  *         - stock
+ *         - specifications
+ *         - images
  *       properties:
+ *         categoryId:
+ *           type: integer
+ *           example: 1
  *         name:
  *           type: string
- *           example: Pulsera Platino
+ *           example: "Anillo Esmeralda Colonial"
  *         description:
  *           type: string
- *           example: Pulsera artesanal en platino con acabado mate.
- *         priceCop:
+ *           example: "Anillo en oro de 18k con esmeralda colombiana certificada."
+ *         baseWeight:
  *           type: number
- *           example: 7200000
- *         material:
- *           type: string
- *           enum: [oro, plata, platino]
- *           example: platino
+ *           example: 3.8
+ *         stoneValue:
+ *           type: number
+ *           example: 850000
+ *         laborCost:
+ *           type: number
+ *           example: 0
  *         stock:
- *           type: number
- *           example: 5
+ *           type: integer
+ *           example: 10
+ *         specifications:
+ *           type: object
+ *           example: { "requiresSize": true, "hasStones": true }
+ *         images:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["https://cloudinary.com/img.jpg"]
  */
 
 /**
@@ -84,6 +126,9 @@ const router = Router();
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Product'
+ *                 message:
+ *                   type: string
+ *                   example: "Catálogo obtenido correctamente."
  */
 router.get('/', getProducts);
 
@@ -94,15 +139,15 @@ router.get('/', getProducts);
  *     tags:
  *       - Productos
  *     summary: Obtener una joya por ID
- *     description: Retorna los datos completos de una joya específica.
+ *     description: Retorna los datos completos de una joya específica usando su UUID.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: ID único de la joya
- *         example: "1"
+ *         description: UUID de la joya
+ *         example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
  *     responses:
  *       200:
  *         description: Joya encontrada.
@@ -128,7 +173,7 @@ router.get('/:id', getProduct);
  *     tags:
  *       - Productos
  *     summary: Crear una nueva joya
- *     description: Agrega una nueva joya al catálogo de Joyería KOB.
+ *     description: Agrega una nueva joya al catálogo y calcula su precio automáticamente.
  *     requestBody:
  *       required: true
  *       content:
@@ -148,22 +193,11 @@ router.get('/:id', getProduct);
  *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Product'
- *       400:
- *         description: Faltan campos obligatorios.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 error:
- *                   type: string
- *                   example: MISSING_FIELDS
  *                 message:
  *                   type: string
- *                   example: Todos los campos son obligatorios.
+ *                   example: "Joya creada y precio calculado correctamente."
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post('/', postProduct);
 
@@ -174,15 +208,15 @@ router.post('/', postProduct);
  *     tags:
  *       - Productos
  *     summary: Eliminar una joya
- *     description: Elimina permanentemente una joya del catálogo por su ID.
+ *     description: Elimina permanentemente una joya del catálogo por su UUID.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: ID único de la joya a eliminar
- *         example: "1"
+ *         description: UUID de la joya a eliminar
+ *         example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
  *     responses:
  *       200:
  *         description: Joya eliminada correctamente.
