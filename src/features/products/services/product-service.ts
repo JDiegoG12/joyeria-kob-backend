@@ -1,7 +1,8 @@
 import { prisma } from '../../../config/prisma';
+import { IProductRawInput } from '../models/product-types';
 import { ICreateProductDTO } from '../models/product-types';
 import { calculateSuggestedPrice } from '../../../shared/utils/price-calculator';
-
+import { processAndSaveImage } from '../../../shared/utils/image.processor';
 /**
  * Obtiene el catálogo completo de productos disponibles.
  * @returns Un arreglo con todos los productos activos.
@@ -33,8 +34,29 @@ export const getProductByIdService = async (id: string) => {
  * @returns El producto recién creado en la base de datos.
  * @throws Error si no se encuentra la configuración del precio del oro.
  */
-export const createProductService = async (data: ICreateProductDTO) => {
-  // 1. Obtener el precio actual del oro desde la base de datos (SystemSetting)
+export const createProductService = async (
+  data: IProductRawInput,
+  files: Express.Multer.File[],
+) => {
+  // 1. Transformación y Limpieza
+  const validatedData: ICreateProductDTO = {
+    categoryId: Number(data.categoryId),
+    name: data.name,
+    description: data.description,
+    baseWeight: Number(data.baseWeight),
+    additionalValue: Number(data.additionalValue),
+    laborCost: Number(data.laborCost),
+    stock: Number(data.stock),
+    specifications: JSON.parse(data.specifications), // Convertimos texto a objeto
+    images: [], // Se llenará con imageNames
+  };
+
+  // 2. Procesar imágenes
+  const imageNames = await Promise.all(
+    files.map((file) => processAndSaveImage(file)),
+  );
+
+  // 3. Obtener el precio actual del oro desde la base de datos (SystemSetting)
   const systemSettings = await prisma.systemSetting.findUnique({
     where: { id: 1 },
   });
@@ -47,30 +69,31 @@ export const createProductService = async (data: ICreateProductDTO) => {
     };
   }
 
-  // 2. Calcular el precio sugerido
+  // 4. Calcular el precio sugerido
   // Usamos .toNumber() porque Prisma devuelve tipos Decimal seguros
   const calculatedPrice = calculateSuggestedPrice(
-    data.baseWeight,
+    validatedData.baseWeight,
     systemSettings.goldPricePerGram.toNumber(),
-    data.stoneValue,
+    validatedData.laborCost,
+    validatedData.additionalValue,
   );
   // Lógica inteligente de estado según el stock
-  const initialStatus = data.stock > 0 ? 'AVAILABLE' : 'OUT_OF_STOCK';
+  const initialStatus = validatedData.stock > 0 ? 'AVAILABLE' : 'OUT_OF_STOCK';
 
   // 3. Guardar en la base de datos con Prisma
   const newProduct = await prisma.product.create({
     data: {
-      categoryId: data.categoryId,
-      name: data.name,
-      description: data.description,
-      baseWeight: data.baseWeight,
-      stoneValue: data.stoneValue,
-      laborCost: data.laborCost,
-      stock: data.stock,
+      categoryId: validatedData.categoryId,
+      name: validatedData.name,
+      description: validatedData.description,
+      baseWeight: validatedData.baseWeight,
+      additionalValue: validatedData.additionalValue,
+      laborCost: validatedData.laborCost,
+      stock: validatedData.stock,
       status: initialStatus,
       calculatedPrice: calculatedPrice,
-      specifications: data.specifications as object,
-      images: data.images,
+      specifications: validatedData.specifications as object,
+      images: imageNames, // Guardamos ["uuid1.webp", "uuid2.webp"]
     },
   });
 

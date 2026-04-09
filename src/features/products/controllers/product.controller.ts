@@ -67,7 +67,20 @@ export const postProduct = async (
 ): Promise<void> => {
   try {
     const productData = req.body;
-    const newProduct = await createProductService(productData);
+    // Capturamos los archivos de imagen inyectados por el middleware de Multer
+    const files = req.files as Express.Multer.File[]; // Cast necesario para TypeScript
+
+    //Validación de seguridad
+    if (!files || files.length === 0) {
+      res.status(400).json({
+        success: false,
+        error: 'MISSING_IMAGES',
+        message: 'Se requieren imágenes para crear la joya.',
+      });
+      return;
+    }
+
+    const newProduct = await createProductService(productData, files);
 
     res.status(201).json({
       success: true,

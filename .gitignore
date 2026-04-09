@@ -40,5 +40,8 @@ Desktop.ini
 # Coverage
 coverage/
 
+# Carpeta de uploads 
+public/uploads/
+
 # Archivos locales de desarrollo
 *.local

@@ -4,6 +4,7 @@ import { swaggerSpec } from '../config/swagger.config';
 import productRouter from '../features/products/routes';
 import categoryRouter from '../features/categories/routes';
 import { errorHandler } from './middlewares/error.middleware';
+import path from 'path';
 
 /**
  * Instancia principal de la aplicación Express para la Joyería KOB.
@@ -51,5 +52,5 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.use(errorHandler);
-
+app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
 export default app;

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { uploadJewelImages } from '../../api/middlewares/upload.middleware';
 import {
   getProducts,
   getProduct,
@@ -31,7 +32,7 @@ const router = Router();
  *         baseWeight:
  *           type: number
  *           example: 4.5
- *         stoneValue:
+ *         additionalValue:
  *           type: number
  *           example: 1200000
  *         laborCost:
@@ -66,7 +67,7 @@ const router = Router();
  *         - name
  *         - description
  *         - baseWeight
- *         - stoneValue
+ *         - additionalValue
  *         - laborCost
  *         - stock
  *         - specifications
@@ -84,7 +85,7 @@ const router = Router();
  *         baseWeight:
  *           type: number
  *           example: 3.8
- *         stoneValue:
+ *         additionalValue:
  *           type: number
  *           example: 850000
  *         laborCost:
@@ -172,34 +173,49 @@ router.get('/:id', getProduct);
  *   post:
  *     tags:
  *       - Productos
- *     summary: Crear una nueva joya
- *     description: Agrega una nueva joya al catálogo y calcula su precio automáticamente.
+ *     summary: Crear una nueva joya con imágenes
+ *     description: Agrega una nueva joya cargando archivos reales y calculando el precio automáticamente.
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/ProductInput'
+ *             type: object
+ *             properties:
+ *               categoryId:
+ *                 type: integer
+ *                 example: 1
+ *               name:
+ *                 type: string
+ *                 example: "Anillo Zafiro"
+ *               description:
+ *                 type: string
+ *                 example: "Oro 18k"
+ *               baseWeight:
+ *                 type: number
+ *                 example: 4.5
+ *               additionalValue:
+ *                 type: number
+ *                 example: 500000
+ *               laborCost:
+ *                 type: number
+ *                 example: 100000
+ *               stock:
+ *                 type: integer
+ *                 example: 5
+ *               specifications:
+ *                 type: string
+ *                 example: '{"requiresSize":true}'
+ *               imageFiles:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
  *     responses:
  *       201:
  *         description: Joya creada correctamente.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   $ref: '#/components/schemas/Product'
- *                 message:
- *                   type: string
- *                   example: "Joya creada y precio calculado correctamente."
- *       400:
- *         $ref: '#/components/responses/ValidationError'
  */
-router.post('/', postProduct);
+router.post('/', uploadJewelImages, postProduct);
 
 /**
  * @openapi

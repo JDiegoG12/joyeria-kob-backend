@@ -17,9 +17,23 @@ export interface ICreateProductDTO {
   name: string;
   description: string;
   baseWeight: number;
-  stoneValue: number;
+  additionalValue: number;
   laborCost: number;
   stock: number;
   specifications: IJewelSpecifications;
   images: string[];
+}
+
+/**
+ * Representa los datos tal cual llegan del formulario (todo como string).
+ */
+export interface IProductRawInput {
+  categoryId: string;
+  name: string;
+  description: string;
+  baseWeight: string;
+  additionalValue: string;
+  laborCost: string;
+  stock: string;
+  specifications: string; // JSON en texto
 }
