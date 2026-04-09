@@ -69,6 +69,7 @@ Abre el archivo `.env` recién creado y completa los valores según tu entorno l
 PORT=4000
 DB_URL=mysql://usuario:contraseña@localhost:3306/joyeria_kob
 JWT_SECRET=      # Clave secreta para firmar los tokens JWT
+APP_URL=http://localhost:4000  # URL base para servir imágenes
 ```
 
 > El archivo `.env` nunca se sube al repositorio. Si necesitas agregar una nueva variable de entorno, agrégala también en `.env.example` con el valor vacío para que el equipo sepa que existe.
@@ -124,12 +125,28 @@ El servidor quedará corriendo en `http://localhost:4000`.
 | commitlint         | ^19.8.0  | Validación de mensajes de commit             |
 | nodemon            | ^3.1.14  | Reinicio automático en desarrollo            |
 | ts-node            | ^10.9.2  | Ejecuta TypeScript directamente sin compilar |
+| Multer             | ^1.4.5   | Middleware para recepción de archivos        |
+
+---
+
+## Gestión de Imágenes (Almacenamiento Local en Hostinger)
+
+Para maximizar el uso del almacenamiento de Hostinger y garantizar una carga ultra-rápida (UX Premium), el backend no guarda imágenes crudas. Sigue este flujo:
+
+1.  **Recepción**: `Multer` recibe los archivos en memoria.
+2.  **Procesamiento**: `Sharp` redimensiona a 1000px y convierte a formato `.webp` (80% calidad).
+3.  **Persistencia**: Se guardan en `public/uploads/products/`.
+4.  **Acceso**: Las imágenes son servidas como estáticos a través de la ruta `/uploads`.
+
+> **Nota para producción**: Asegúrate de que la carpeta `public/uploads` tenga permisos de escritura en tu servidor Hostinger.
 
 ---
 
 ## Estructura de carpetas
 
 ```
+public/
+└── uploads/         # Archivos multimedia (joyas) guardados localmente
 prisma/
 ├── schema.prisma    # Esquema de la base de datos y configuración de Prisma
 └── seed.ts          # Script para sembrar datos iniciales
@@ -160,6 +177,9 @@ src/
 
 ### Reglas de arquitectura
 
+- **Imágenes**: El nombre del archivo guardado en DB debe ser un UUID. Nunca usar el nombre original del cliente.
+- **Precios**: El `calculatedPrice` siempre debe ser procesado en el `service` antes de persistir, nunca enviado directamente por el cliente.
+- **Early Return**: Validar la existencia de archivos y campos obligatorios al inicio de cada función.
 - **El controller nunca habla con la base de datos.** Eso es responsabilidad del service.
 - **El service nunca conoce `Request` ni `Response`.** Solo recibe datos planos y retorna datos planos.
 - **Las rutas de un feature no importan nada de otro feature.** Si algo se comparte, va a `shared/`.
@@ -176,8 +196,12 @@ Todas las respuestas de la API siguen la misma estructura. Nunca rompas este con
 ```json
 {
   "success": true,
-  "data": { "id": "1", "name": "Anillo Esmeralda Colonial" },
-  "message": "Producto obtenido correctamente."
+  "data": { 
+    "id": "uuid", 
+    "name": "Anillo Zafiro", 
+    "images": ["uuid.webp"] 
+  },
+  "message": "Joya creada correctamente."
 }
 ```
 
@@ -190,6 +214,20 @@ Todas las respuestas de la API siguen la misma estructura. Nunca rompas este con
   "message": "La joya solicitada no existe en el catálogo."
 }
 ```
+
+---
+
+## Preguntas frecuentes
+
+**¿Cómo accedo a las imágenes subidas?**
+Usa la URL base configurada en `.env` seguida de la ruta: `${APP_URL}/uploads/products/nombre-archivo.webp`.
+
+**¿Por qué mis imágenes pesan tan poco?**
+Gracias a `Sharp`, las imágenes se procesan para pesas un ~70% menos que el original sin pérdida de calidad perceptible, optimizando el ancho de banda del servidor.
+
+**¿Qué pasa si borro la carpeta `public/uploads`?**
+Perderás todas las fotos de las joyas de forma permanente. Realiza backups periódicos de esta carpeta en Hostinger.
+
 
 ---
 
