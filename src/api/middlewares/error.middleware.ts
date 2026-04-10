@@ -1,30 +1,28 @@
 import { Request, Response, NextFunction } from 'express';
-import { AppError } from '../../shared/constants/app-error';
-import { ERROR_CODES, ErrorCode } from '../../shared/constants/error-codes';
+import { MulterError } from 'multer';
 
 export const errorHandler = (
-  err: Error | AppError,
+  err: any,
   req: Request,
   res: Response,
-  _next: NextFunction,
+  next: NextFunction,
 ) => {
-  void _next; // ← elimina la advertencia "defined but never used"
-
-  let status = 500;
-  let code: ErrorCode = ERROR_CODES.INTERNAL_ERROR;
-  let message = 'Ocurrió un error inesperado';
-
-  if (err instanceof AppError) {
-    status = err.status;
-    code = err.code;
-    message = err.message;
-  } else if (err instanceof Error) {
-    message = err.message;
+  void next; // Para evitar el error de variable no utilizada
+  // Capturar errores específicos de Multer (como exceder el límite de archivos)
+  if (err instanceof MulterError) {
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({
+        success: false,
+        error: 'TOO_MANY_IMAGES',
+        message: 'No puedes subir más de 4 imágenes por joya.',
+      });
+    }
   }
 
+  const status = err.status || 500;
   res.status(status).json({
     success: false,
-    error: code,
-    message,
+    error: err.code || 'INTERNAL_SERVER_ERROR',
+    message: err.message || 'Error inesperado.',
   });
 };

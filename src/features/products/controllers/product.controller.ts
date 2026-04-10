@@ -4,6 +4,7 @@ import {
   getProductByIdService,
   createProductService,
   deleteProductService,
+  updateProductService,
 } from '../services/product-service';
 
 /**
@@ -118,6 +119,33 @@ export const removeProduct = async (
       });
       return;
     }
+    next(error);
+  }
+};
+
+/**
+ * Actualiza una joya existente.
+ * Soporta actualización parcial (PATCH) y total (PUT).
+ */
+export const putProduct = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const productData = req.body;
+    //req.files puede ser undifines si no se envian imagenes nuevas
+    const files = req.files as Express.Multer.File[] | undefined;
+
+    const updatedProduct = await updateProductService(id, productData, files);
+
+    res.status(200).json({
+      success: true,
+      data: updatedProduct,
+      message: 'Joya actualizada y precio recalculado correctamente.',
+    });
+  } catch (error) {
     next(error);
   }
 };

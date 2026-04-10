@@ -5,6 +5,7 @@ import {
   getProduct,
   postProduct,
   removeProduct,
+  putProduct,
 } from './controllers/product.controller';
 
 const router = Router();
@@ -99,9 +100,50 @@ const router = Router();
  *           example: { "requiresSize": true, "hasStones": true }
  *         images:
  *           type: array
+ *           maxItems: 4
  *           items:
  *             type: string
  *           example: ["https://cloudinary.com/img.jpg"]
+ *
+ *     ProductUpdateInput:
+ *       type: object
+ *       description: Todos los campos son opcionales para permitir actualizaciones parciales.
+ *       properties:
+ *         categoryId:
+ *           type: integer
+ *           example: 1
+ *         name:
+ *           type: string
+ *           example: "Anillo Zafiro Actualizado"
+ *         description:
+ *           type: string
+ *           example: "Descripción corregida."
+ *         baseWeight:
+ *           type: number
+ *           example: 4.5
+ *         additionalValue:
+ *           type: number
+ *           example: 1500000
+ *         laborCost:
+ *           type: number
+ *           example: 120000
+ *         stock:
+ *           type: integer
+ *           example: 0
+ *         status:
+ *           type: string
+ *           enum: [AVAILABLE, OUT_OF_STOCK, HIDDEN]
+ *           example: HIDDEN
+ *         specifications:
+ *           type: string
+ *           example: '{"requiresSize": true, "hasStones": true}'
+ *         imageFiles:
+ *           type: array
+ *           description: Si se envían, reemplazarán a las imágenes actuales.
+ *           maxItems: 4
+ *           items:
+ *             type: string
+ *             format: binary
  */
 
 /**
@@ -208,6 +250,7 @@ router.get('/:id', getProduct);
  *                 example: '{"requiresSize":true}'
  *               imageFiles:
  *                 type: array
+ *                 maxItems: 4
  *                 items:
  *                   type: string
  *                   format: binary
@@ -251,5 +294,33 @@ router.post('/', uploadJewelImages, postProduct);
  *         $ref: '#/components/responses/NotFoundError'
  */
 router.delete('/:id', removeProduct);
+
+/**
+ * @openapi
+ * /api/products/{id}:
+ *   put:
+ *     tags:
+ *       - Productos
+ *     summary: Actualizar una joya existente
+ *     description: Permite modificar cualquier campo de la joya. Si se envían imágenes, las anteriores se borrarán físicamente del servidor. El precio se recalcula automáticamente si cambian los valores base.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: UUID de la joya a actualizar
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/ProductUpdateInput'
+ *     responses:
+ *       200:
+ *         description: Joya actualizada correctamente.
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
+router.put('/:id', uploadJewelImages, putProduct);
 
 export default router;
