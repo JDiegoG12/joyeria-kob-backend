@@ -11,13 +11,17 @@ import { processAndSaveImage } from '../../../shared/utils/image.processor';
 import fs from 'fs/promises';
 import path from 'path';
 /**
- * Obtiene el catálogo completo de productos disponibles.
+ * Obtiene el catálogo completo de productos.
+ * @param isAdmin - Si es true, trae todos los productos incluyendo los ocultos; si es false, solo los disponibles.
  * @returns Un arreglo con todos los productos activos.
  */
 //traer todos los estados disponibles, incluyendo los ocultos, para que el admin pueda verlos y editarlos
-export const getAllProductsService = async () => {
+export const getAllProductsService = async (isAdmin: boolean = false) => {
+  // Si es admin, no aplicamos el filtro (traemos todo). Si no es admin, filtramos solo los disponibles.
+  const queryFilter = isAdmin ? {} : { status: 'AVAILABLE' as ProductStatus };
+
   return await prisma.product.findMany({
-    where: { status: { in: ['AVAILABLE', 'OUT_OF_STOCK', 'HIDDEN'] } }, // Traemos todos los productos sin filtrar por estado
+    where: queryFilter,
     include: { category: true }, // Prisma hace el JOIN automáticamente
     orderBy: { createdAt: 'desc' },
   });
@@ -66,12 +70,6 @@ export const createProductService = async (
     description: data.description,
     baseWeight: Number(data.baseWeight),
     additionalValue: Number(data.additionalValue),
-
-    //Si el front envia laborCost, lo usamos. Si no envia o manda un campo vacio, usamos el default de la base de datos
-    laborCost: data.laborCost
-      ? Number(data.laborCost)
-      : systemSettings.defaultLaborCost.toNumber(),
-
     stock: Number(data.stock),
     specifications: JSON.parse(data.specifications), // Convertimos texto a objeto
     images: [], // Se llenará con imageNames
@@ -87,7 +85,6 @@ export const createProductService = async (
   const calculatedPrice = calculateSuggestedPrice(
     validatedData.baseWeight,
     systemSettings.goldPricePerGram.toNumber(),
-    validatedData.laborCost,
     validatedData.additionalValue,
   );
   // Lógica inteligente de estado según el stock
@@ -101,7 +98,6 @@ export const createProductService = async (
       description: validatedData.description,
       baseWeight: validatedData.baseWeight,
       additionalValue: validatedData.additionalValue,
-      laborCost: validatedData.laborCost,
       stock: validatedData.stock,
       status: initialStatus,
       calculatedPrice: calculatedPrice,
@@ -186,7 +182,6 @@ export const updateProductService = async (
     additionalValue: rawData.additionalValue
       ? Number(rawData.additionalValue)
       : undefined,
-    laborCost: rawData.laborCost ? Number(rawData.laborCost) : undefined,
     stock: rawData.stock ? Number(rawData.stock) : undefined,
     specifications: rawData.specifications
       ? JSON.parse(rawData.specifications)
@@ -224,14 +219,12 @@ export const updateProductService = async (
 
   // Usamos '??' (Nullish coalescing): si cleanData no trae el campo, usamos el de la BD
   const weight = cleanData.baseWeight ?? currentProduct.baseWeight.toNumber();
-  const labor = cleanData.laborCost ?? currentProduct.laborCost.toNumber();
   const additional =
     cleanData.additionalValue ?? currentProduct.additionalValue.toNumber();
 
   const newCalculatedPrice = calculateSuggestedPrice(
     weight,
     goldPrice,
-    labor,
     additional,
   );
 

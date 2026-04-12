@@ -153,7 +153,14 @@ const router = Router();
  *     tags:
  *       - Productos
  *     summary: Obtener todas las joyas
- *     description: Retorna el listado completo de joyas disponibles en el catálogo.
+ *     description: Retorna el listado completo de joyas disponibles en el catálogo.Filtra automáticamente las joyas inactivas a menos que se solicite la vista de administrador.
+ *     parameters:
+ *       - in: query
+ *         name: admin
+ *         schema:
+ *           type: boolean
+ *         description: Si se establece en true, se mostrarán todas las joyas incluyendo las ocultas.
+ *         example: true
  *     responses:
  *       200:
  *         description: Listado de joyas obtenido correctamente.

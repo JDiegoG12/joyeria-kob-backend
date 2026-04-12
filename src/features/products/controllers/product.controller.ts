@@ -16,7 +16,9 @@ export const getProducts = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const products = await getAllProductsService();
+    // Si la URL tiene un query ?admin=true, lo interpretamos como que el usuario es admin y le mostramos todo el catálogo, incluyendo los ocultos. Si no, solo mostramos los disponibles.
+    const isAdmin = req.query.admin === 'true';
+    const products = await getAllProductsService(isAdmin);
     res.status(200).json({
       success: true,
       data: products,

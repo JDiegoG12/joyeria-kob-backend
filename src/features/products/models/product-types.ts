@@ -21,7 +21,6 @@ export interface IProductBase {
   description: string;
   baseWeight: number;
   additionalValue: number;
-  laborCost: number;
   stock: number;
   specifications: IJewelSpecifications;
 }
