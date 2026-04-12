@@ -1,8 +1,8 @@
 import { Category } from '@prisma/client';
 import {
-  CreateCategoryInput,
   CategoryWithRelations,
 } from '../services/category.service';
+import { CreateCategoryDto, UpdateCategoryDto } from '../dtos/category.dto';
 
 /**
  * Define la estructura de la respuesta unificada para los facades.
@@ -25,15 +25,10 @@ export interface ICategoryFacade {
   getCategoryChildren(
     id: number,
   ): Promise<FacadeResult<CategoryWithRelations[]>>;
-  createCategory(data: CreateCategoryInput): Promise<FacadeResult<Category>>;
+  createCategory(data: CreateCategoryDto): Promise<FacadeResult<Category>>;
   updateCategory(
     id: number,
-    data: {
-      name?: string;
-      slug?: string;
-      description?: string;
-      parentId?: number | string | null;
-    },
+    data: UpdateCategoryDto,
   ): Promise<FacadeResult<CategoryWithRelations>>;
   deleteCategory(id: number): Promise<FacadeResult<{ message: string }>>;
 }

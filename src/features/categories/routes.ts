@@ -18,69 +18,64 @@ const router = Router();
  *       type: object
  *       properties:
  *         id:
- *           type: string
- *           example: "1"
+ *           type: number
+ *           example: 1
  *         name:
  *           type: string
- *           example: Anillos
+ *           example: "Anillos"
  *         slug:
  *           type: string
- *           example: anillos
+ *           example: "anillos"
  *         description:
  *           type: string
- *           example: Categoría de joyas para ocasiones especiales.
+ *           example: "Categoría de joyas para ocasiones especiales."
  *         parentId:
  *           type: number
  *           nullable: true
- *           example: 0
+ *           example: null
  *         parent:
  *           type: object
  *           nullable: true
  *           properties:
  *             id:
- *               type: string
- *               example: "0"
+ *               type: number
+ *               example: 1
  *             name:
  *               type: string
- *               example: Categorías
+ *               example: "Joyas"
  *             slug:
  *               type: string
- *               example: categorias
+ *               example: "joyas"
  *         children:
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/Category'
+ *
  *     CategoryInput:
  *       type: object
  *       required:
  *         - name
- *         - slug
  *       properties:
  *         name:
  *           type: string
- *           example: Anillos
- *         slug:
- *           type: string
- *           example: anillos
+ *           example: "Collares"
  *         description:
  *           type: string
- *           example: Categoría de joyas para ocasiones especiales.
+ *           example: "Collares de oro y plata."
  *         parentId:
  *           type: number
  *           nullable: true
  *           example: 1
+ *
  *     CategoryUpdateInput:
  *       type: object
  *       properties:
  *         name:
  *           type: string
- *           example: Anillos
- *         slug:
- *           type: string
- *           example: anillos
+ *           example: "Anillos de Compromiso"
  *         description:
  *           type: string
- *           example: Categoría de joyas para ocasiones especiales.
+ *           example: "Anillos de compromiso con diamantes."
  *         parentId:
  *           oneOf:
  *             - type: number
@@ -96,7 +91,7 @@ const router = Router();
  *     tags:
  *       - Categorías
  *     summary: Obtener todas las categorías
- *     description: Retorna el listado completo de categorías del catálogo.
+ *     description: Retorna el listado completo de categorías del catálogo, incluyendo sus relaciones de padre e hijos.
  *     responses:
  *       200:
  *         description: Categorías obtenidas correctamente.
@@ -112,6 +107,9 @@ const router = Router();
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Category'
+ *                 message:
+ *                   type: string
+ *                   example: 'Operación exitosa.'
  */
 router.get('/', getAllCategoriesController);
 
@@ -128,9 +126,9 @@ router.get('/', getAllCategoriesController);
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: number
  *         description: ID único de la categoría
- *         example: "1"
+ *         example: 1
  *     responses:
  *       200:
  *         description: Categoría encontrada.
@@ -144,8 +142,11 @@ router.get('/', getAllCategoriesController);
  *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Category'
+ *                 message:
+ *                   type: string
+ *                   example: 'Categoría obtenida correctamente.'
  *       404:
- *         description: Categoría no encontrada.
+ *         description: La categoría solicitada no existe.
  *         content:
  *           application/json:
  *             schema:
@@ -156,10 +157,10 @@ router.get('/', getAllCategoriesController);
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: CATEGORY_NOT_FOUND
+ *                   example: "CATEGORY_NOT_FOUND"
  *                 message:
  *                   type: string
- *                   example: La categoría solicitada no existe en el catálogo.
+ *                   example: "La categoría solicitada no existe en el catálogo."
  */
 router.get('/:id', getCategoryByIdController);
 
@@ -176,9 +177,9 @@ router.get('/:id', getCategoryByIdController);
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: number
  *         description: ID único de la categoría padre
- *         example: "1"
+ *         example: 1
  *     responses:
  *       200:
  *         description: Subcategorías encontradas.
@@ -194,8 +195,11 @@ router.get('/:id', getCategoryByIdController);
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Category'
+ *                 message:
+ *                   type: string
+ *                   example: 'Subcategorías obtenidas correctamente.'
  *       404:
- *         description: Categoría padre no encontrada.
+ *         description: La categoría padre no fue encontrada.
  *         content:
  *           application/json:
  *             schema:
@@ -206,10 +210,10 @@ router.get('/:id', getCategoryByIdController);
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: CATEGORY_NOT_FOUND
+ *                   example: "CATEGORY_NOT_FOUND"
  *                 message:
  *                   type: string
- *                   example: La categoría padre solicitada no existe.
+ *                   example: "La categoría padre solicitada no existe."
  */
 router.get('/:id/children', getCategoryChildrenController);
 
@@ -220,15 +224,15 @@ router.get('/:id/children', getCategoryChildrenController);
  *     tags:
  *       - Categorías
  *     summary: Actualizar una categoría existente
- *     description: Modifica los datos de una categoría ya creada.
+ *     description: Modifica los datos de una categoría ya creada. El slug se actualiza automáticamente si cambia el nombre.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
- *           type: string
- *         description: ID único de la categoría
- *         example: "1"
+ *           type: number
+ *         description: ID único de la categoría a actualizar
+ *         example: 1
  *     requestBody:
  *       required: true
  *       content:
@@ -248,8 +252,11 @@ router.get('/:id/children', getCategoryChildrenController);
  *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Category'
+ *                 message:
+ *                   type: string
+ *                   example: 'Categoría actualizada correctamente.'
  *       400:
- *         description: Datos inválidos o parentId inválido.
+ *         description: Error de validación o datos de entrada incorrectos.
  *         content:
  *           application/json:
  *             schema:
@@ -260,12 +267,12 @@ router.get('/:id/children', getCategoryChildrenController);
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: INVALID_PARENT_ID
+ *                   example: "VALIDATION_ERROR"
  *                 message:
  *                   type: string
- *                   example: El parentId suministrado no es válido.
+ *                   example: "Error de validación en los datos de entrada."
  *       404:
- *         description: Categoría no encontrada.
+ *         description: La categoría a actualizar no fue encontrada.
  *         content:
  *           application/json:
  *             schema:
@@ -276,12 +283,12 @@ router.get('/:id/children', getCategoryChildrenController);
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: CATEGORY_NOT_FOUND
+ *                   example: "CATEGORY_NOT_FOUND"
  *                 message:
  *                   type: string
- *                   example: La categoría solicitada no existe en el catálogo.
+ *                   example: "La categoría solicitada no existe en el catálogo."
  *       409:
- *         description: Slug duplicado.
+ *         description: Conflicto, el nombre de la categoría ya existe.
  *         content:
  *           application/json:
  *             schema:
@@ -292,10 +299,10 @@ router.get('/:id/children', getCategoryChildrenController);
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: SLUG_ALREADY_EXISTS
+ *                   example: "NAME_ALREADY_EXISTS"
  *                 message:
  *                   type: string
- *                   example: El slug proporcionado ya existe. Por favor, elige otro.
+ *                   example: "El nombre de categoría 'Anillos de Compromiso' ya existe."
  */
 router.put('/:id', updateCategoryController);
 
@@ -306,7 +313,7 @@ router.put('/:id', updateCategoryController);
  *     tags:
  *       - Categorías
  *     summary: Crear una nueva categoría
- *     description: Agrega una nueva categoría al catálogo de joyas.
+ *     description: Agrega una nueva categoría al catálogo de joyas. El slug se genera automáticamente a partir del nombre.
  *     requestBody:
  *       required: true
  *       content:
@@ -326,8 +333,11 @@ router.put('/:id', updateCategoryController);
  *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Category'
+ *                 message:
+ *                   type: string
+ *                   example: 'Categoría creada correctamente.'
  *       400:
- *         description: Datos inválidos o faltan campos obligatorios.
+ *         description: Error de validación en los datos de entrada.
  *         content:
  *           application/json:
  *             schema:
@@ -338,12 +348,12 @@ router.put('/:id', updateCategoryController);
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: MISSING_FIELDS
+ *                   example: "VALIDATION_ERROR"
  *                 message:
  *                   type: string
- *                   example: Los campos name y slug son obligatorios.
+ *                   example: "Error de validación en los datos de entrada."
  *       409:
- *         description: El slug ya existe.
+ *         description: Conflicto, el nombre de la categoría ya existe en ese nivel.
  *         content:
  *           application/json:
  *             schema:
@@ -354,10 +364,10 @@ router.put('/:id', updateCategoryController);
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: SLUG_ALREADY_EXISTS
+ *                   example: "NAME_ALREADY_EXISTS"
  *                 message:
  *                   type: string
- *                   example: El slug proporcionado ya existe. Por favor, elige otro.
+ *                   example: "El nombre de categoría 'Collares' ya existe en este nivel."
  */
 router.post('/', postCategoryController);
 
@@ -374,9 +384,9 @@ router.post('/', postCategoryController);
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: number
  *         description: ID único de la categoría a eliminar
- *         example: "1"
+ *         example: 1
  *     responses:
  *       200:
  *         description: Categoría eliminada correctamente.
@@ -388,11 +398,17 @@ router.post('/', postCategoryController);
  *                 success:
  *                   type: boolean
  *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                      message:
+ *                         type: string
+ *                         example: "Categoría eliminada exitosamente."
  *                 message:
  *                   type: string
- *                   example: Categoría eliminada exitosamente.
+ *                   example: "Categoría eliminada exitosamente."
  *       404:
- *         description: Categoría no encontrada.
+ *         description: La categoría a eliminar no fue encontrada.
  *         content:
  *           application/json:
  *             schema:
@@ -403,10 +419,10 @@ router.post('/', postCategoryController);
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: CATEGORY_NOT_FOUND
+ *                   example: "CATEGORY_NOT_FOUND"
  *                 message:
  *                   type: string
- *                   example: La categoría solicitada no existe en el catálogo.
+ *                   example: "La categoría solicitada no existe en el catálogo."
  *       400:
  *         description: No se puede eliminar porque tiene hijos o productos asociados.
  *         content:
@@ -423,7 +439,7 @@ router.post('/', postCategoryController);
  *                   example: CATEGORY_HAS_CHILDREN
  *                 message:
  *                   type: string
- *                   example: No se puede eliminar la categoría porque tiene subcategorías asociadas.
+ *                   example: "No se puede eliminar la categoría porque tiene subcategorías asociadas."
  */
 router.delete('/:id', removeCategoryController);
 
