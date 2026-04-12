@@ -1,86 +1,154 @@
-import { Request, Response } from 'express';
-import { ICategoryFacade } from '../ports/category.ports';
+import { Request, Response, NextFunction } from 'express';
+import { ICategoryFacade, FacadeResult } from '../ports/category.ports';
 import { categoryFacade } from '../facade/category.facade';
+import {
+  CreateCategorySchema,
+  UpdateCategorySchema,
+} from '../dtos/category.dto';
+import { ZodError } from 'zod';
+import { ERROR_CODES } from '../../../shared/constants/error-codes';
 
-/**
- * Crea los controladores para el feature de categorías, inyectando una implementación
- * del facade. Esto permite que los controladores dependan de una abstracción (ICategoryFacade)
- * y no de una implementación concreta, facilitando el testing y el mantenimiento.
- *
- * @param facade - Una instancia que cumple con la interfaz ICategoryFacade.
- * @returns Un objeto con todos los métodos del controlador.
- */
+const handleResponse = (res: Response, result: FacadeResult<unknown>) => {
+  const { status, ...body } = result;
+  return res.status(status).json(body);
+};
+
 export const createCategoryControllers = (facade: ICategoryFacade) => {
   return {
-    /**
-     * Retorna todas las categorías del catálogo.
-     */
-    getAllCategoriesController: async (req: Request, res: Response) => {
-      const result = await facade.getAllCategories();
-      res.status(result.status).json(result);
+    getAllCategoriesController: async (
+      req: Request,
+      res: Response,
+      next: NextFunction,
+    ) => {
+      try {
+        const result = await facade.getAllCategories();
+        handleResponse(res, result);
+      } catch (error) {
+        next(error);
+      }
     },
 
-    /**
-     * Retorna una categoría específica por su ID.
-     */
-    getCategoryByIdController: async (req: Request, res: Response) => {
-      const id = Number(req.params['id']);
-      const result = await facade.getCategoryById(id);
-      res.status(result.status).json(result);
+    getCategoryByIdController: async (
+      req: Request,
+      res: Response,
+      next: NextFunction,
+    ) => {
+      try {
+        const id = Number(req.params['id']);
+        const result = await facade.getCategoryById(id);
+        handleResponse(res, result);
+      } catch (error) {
+        next(error);
+      }
     },
 
-    /**
-     * Retorna las subcategorías directas de una categoría.
-     */
-    getCategoryChildrenController: async (req: Request, res: Response) => {
-      const id = Number(req.params['id']);
-      const result = await facade.getCategoryChildren(id);
-      res.status(result.status).json(result);
+    getCategoryChildrenController: async (
+      req: Request,
+      res: Response,
+      next: NextFunction,
+    ) => {
+      try {
+        const id = Number(req.params['id']);
+        const result = await facade.getCategoryChildren(id);
+        handleResponse(res, result);
+      } catch (error) {
+        next(error);
+      }
     },
 
-    /**
-     * Crea una nueva categoría en el catálogo.
-     */
-    postCategoryController: async (req: Request, res: Response) => {
-      const { name, slug, description, parentId } = req.body;
-      const result = await facade.createCategory({
-        name,
-        slug,
-        description,
-        parentId,
-      });
-      res.status(result.status).json(result);
+    postCategoryController: async (
+      req: Request,
+      res: Response,
+      next: NextFunction,
+    ) => {
+      try {
+        const categoryData = CreateCategorySchema.parse(req.body);
+        const result = await facade.createCategory(categoryData);
+
+        const response = {
+          success: result.success,
+          message:
+            result.message ||
+            (result.success
+              ? 'Categoría creada correctamente.'
+              : 'Error al crear la categoría.'),
+          ...(result.success ? { data: result.data } : { error: result.error }),
+        };
+
+        res.status(result.status).json(response);
+      } catch (error) {
+        if (error instanceof ZodError) {
+          return res.status(400).json({
+            success: false,
+            error: ERROR_CODES.VALIDATION_ERROR,
+            message: 'Error de validación en los datos de entrada.',
+            details: error.issues,
+          });
+        }
+        next(error); // Forward other errors to the global error handler
+      }
     },
 
-    /**
-     * Actualiza una categoría existente.
-     */
-    updateCategoryController: async (req: Request, res: Response) => {
-      const id = Number(req.params['id']);
-      const { name, slug, description, parentId } = req.body;
-      const result = await facade.updateCategory(id, {
-        name,
-        slug,
-        description,
-        parentId,
-      });
-      res.status(result.status).json(result);
+    updateCategoryController: async (
+      req: Request,
+      res: Response,
+      next: NextFunction,
+    ) => {
+      try {
+        const id = Number(req.params['id']);
+        const categoryData = UpdateCategorySchema.parse(req.body);
+        const result = await facade.updateCategory(id, categoryData);
+
+        const response = {
+          success: result.success,
+          message:
+            result.message ||
+            (result.success
+              ? 'Categoría actualizada correctamente.'
+              : 'Error al actualizar la categoría.'),
+          ...(result.success ? { data: result.data } : { error: result.error }),
+        };
+
+        res.status(result.status).json(response);
+      } catch (error) {
+        if (error instanceof ZodError) {
+          return res.status(400).json({
+            success: false,
+            error: ERROR_CODES.VALIDATION_ERROR,
+            message: 'Error de validación en los datos de entrada.',
+            details: error.issues,
+          });
+        }
+        next(error);
+      }
     },
 
-    /**
-     * Elimina una categoría del catálogo por su ID.
-     */
-    removeCategoryController: async (req: Request, res: Response) => {
-      const id = Number(req.params['id']);
-      const result = await facade.deleteCategory(id);
-      res.status(result.status).json(result);
+    removeCategoryController: async (
+      req: Request,
+      res: Response,
+      next: NextFunction,
+    ) => {
+      try {
+        const id = Number(req.params['id']);
+        const result = await facade.deleteCategory(id);
+        const response = {
+          success: result.success,
+          message:
+            result.message ||
+            (result.success
+              ? 'Categoría eliminada correctamente.'
+              : 'Error al eliminar la categoría.'),
+          ...(result.success ? { data: result.data } : { error: result.error }),
+        };
+
+        res.status(result.status).json(response);
+      } catch (error) {
+        next(error);
+      }
     },
   };
 };
 
-/**
- * Exporta una instancia de los controladores ya inyectados con el facade por defecto.
- */
 export const {
   getAllCategoriesController,
   getCategoryByIdController,

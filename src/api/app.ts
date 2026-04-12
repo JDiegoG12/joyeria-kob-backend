@@ -5,12 +5,18 @@ import productRouter from '../features/products/routes';
 import categoryRouter from '../features/categories/routes';
 import { errorHandler } from './middlewares/error.middleware';
 import path from 'path';
-
+import cors from 'cors';
 /**
  * Instancia principal de la aplicación Express para la Joyería KOB.
  */
 const app: Application = express();
-
+//esto es pa que el cors del frontend no de problemas
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+  }),
+);
 // Middlewares base para entender JSON
 app.use(express.json());
 

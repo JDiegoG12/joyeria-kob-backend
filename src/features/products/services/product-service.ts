@@ -14,9 +14,10 @@ import path from 'path';
  * Obtiene el catálogo completo de productos disponibles.
  * @returns Un arreglo con todos los productos activos.
  */
+//traer todos los estados disponibles, incluyendo los ocultos, para que el admin pueda verlos y editarlos
 export const getAllProductsService = async () => {
   return await prisma.product.findMany({
-    where: { status: 'AVAILABLE' },
+    where: { status: { in: ['AVAILABLE', 'OUT_OF_STOCK', 'HIDDEN'] } }, // Traemos todos los productos sin filtrar por estado
     include: { category: true }, // Prisma hace el JOIN automáticamente
     orderBy: { createdAt: 'desc' },
   });

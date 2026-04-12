@@ -5,13 +5,15 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
-  type CreateCategoryInput,
   type CategoryWithRelations,
   findCategoryByNameAndParent,
   getCategoryChildren,
+  UpdateCategoryInput,
 } from '../services/category.service';
 import { ICategoryFacade, FacadeResult } from '../ports/category.ports';
 import { ERROR_CODES } from '../../../shared/constants/error-codes';
+import { CreateCategoryDto, UpdateCategoryDto } from '../dtos/category.dto';
+import { generateSlug } from '../../../shared/utils/slug.generator';
 
 /**
  * Verifica si asignar un parentId crearía una referencia cíclica en la jerarquía.
@@ -32,13 +34,6 @@ const hasCyclicReference = async (
   return false;
 };
 
-type UpdateCategoryInputWithString = {
-  name?: string;
-  slug?: string;
-  description?: string;
-  parentId?: number | string | null;
-};
-
 /**
  * Implementación concreta de la lógica de negocio para categorías.
  * Cumple con el contrato definido en ICategoryFacade.
@@ -48,6 +43,7 @@ class CategoryFacade implements ICategoryFacade {
     try {
       const categories = await getAllCategories();
       return {
+        message: 'Categorías obtenidas correctamente.',
         success: true,
         data: categories,
         status: 200,
@@ -86,6 +82,7 @@ class CategoryFacade implements ICategoryFacade {
         };
       }
       return {
+        message: 'Categoría obtenida correctamente.',
         success: true,
         data: category,
         status: 200,
@@ -126,6 +123,7 @@ class CategoryFacade implements ICategoryFacade {
 
       const children = await getCategoryChildren(id);
       return {
+        message: 'Subcategorías obtenidas correctamente.',
         success: true,
         data: children,
         status: 200,
@@ -142,9 +140,9 @@ class CategoryFacade implements ICategoryFacade {
   }
 
   async createCategory(
-    data: CreateCategoryInput,
+    data: CreateCategoryDto,
   ): Promise<FacadeResult<Category>> {
-    const { name, slug, description, parentId } = data;
+    const { name, description, parentId } = data;
 
     let parsedParentId: number | null | undefined;
     if (parentId === null) {
@@ -164,11 +162,11 @@ class CategoryFacade implements ICategoryFacade {
       };
     }
 
-    if (!name || !slug) {
+    if (!name) {
       return {
         success: false,
         error: ERROR_CODES.MISSING_FIELDS,
-        message: 'Los campos name y slug son obligatorios.',
+        message: 'El campo name es obligatorio.',
         status: 400,
       };
     }
@@ -198,6 +196,8 @@ class CategoryFacade implements ICategoryFacade {
       };
     }
 
+    const slug = generateSlug(name);
+
     try {
       const newCategory = await createCategory({
         name,
@@ -206,6 +206,7 @@ class CategoryFacade implements ICategoryFacade {
         parentId: parsedParentId,
       });
       return {
+        message: 'Categoría creada correctamente.',
         success: true,
         data: newCategory,
         status: 201,
@@ -221,7 +222,8 @@ class CategoryFacade implements ICategoryFacade {
           return {
             success: false,
             error: ERROR_CODES.SLUG_ALREADY_EXISTS,
-            message: 'El slug proporcionado ya existe. Por favor, elige otro.',
+            message:
+              'El slug generado a partir del nombre ya existe. Por favor, elige otro nombre.',
             status: 409,
           };
         }
@@ -245,7 +247,7 @@ class CategoryFacade implements ICategoryFacade {
 
   async updateCategory(
     id: number,
-    data: UpdateCategoryInputWithString,
+    data: UpdateCategoryDto,
   ): Promise<FacadeResult<CategoryWithRelations>> {
     if (Number.isNaN(id)) {
       return {
@@ -256,7 +258,7 @@ class CategoryFacade implements ICategoryFacade {
       };
     }
 
-    const { name, slug, description, parentId } = data;
+    const { name, description, parentId } = data;
 
     const hasParentId = parentId !== undefined;
     const parsedParentId =
@@ -323,11 +325,14 @@ class CategoryFacade implements ICategoryFacade {
       }
     }
 
-    const updateData: Partial<CreateCategoryInput> = {};
+    const updateData: UpdateCategoryInput = {};
 
-    if (name !== undefined) updateData.name = name;
-    if (slug !== undefined) updateData.slug = slug;
-    if (description !== undefined) updateData.description = description;
+    if (name !== undefined) {
+      updateData.name = name;
+      updateData.slug = generateSlug(name);
+    }
+    if (description !== undefined)
+      updateData.description = description === null ? undefined : description;
     if (hasParentId) updateData.parentId = parsedParentId;
 
     if (Object.keys(updateData).length === 0) {
@@ -388,7 +393,8 @@ class CategoryFacade implements ICategoryFacade {
           return {
             success: false,
             error: ERROR_CODES.SLUG_ALREADY_EXISTS,
-            message: 'El slug proporcionado ya existe. Por favor, elige otro.',
+            message:
+              'El slug generado a partir del nombre ya existe. Por favor, elige otro nombre.',
             status: 409,
           };
         }

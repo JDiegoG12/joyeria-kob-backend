@@ -15,7 +15,7 @@ export type CategoryWithRelations = Category & {
   children: Category[];
 };
 
-const isPrismaClientKnownRequestError = (
+export const isPrismaClientKnownRequestError = (
   error: unknown,
 ): error is Prisma.PrismaClientKnownRequestError => {
   return (

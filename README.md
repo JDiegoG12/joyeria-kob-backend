@@ -67,7 +67,7 @@ Abre el archivo `.env` recién creado y completa los valores según tu entorno l
 
 ```env
 PORT=4000
-DB_URL=mysql://usuario:contraseña@localhost:3306/joyeria_kob
+DB_URL= # URL de conexión a la base de datos MySQL
 JWT_SECRET=      # Clave secreta para firmar los tokens JWT
 APP_URL=http://localhost:4000  # URL base para servir imágenes
 ```
@@ -163,6 +163,7 @@ src/
 │   │   ├── ports/          # Define las interfaces (contratos) del módulo.
 │   │   ├── services/       # Lógica de acceso a datos (consultas Prisma).
 │   │   └── routes.ts       # Define endpoints y contiene anotaciones @openapi
+│   │   └── tests/          # Pruebas unitarias y de integración.
 │   ├── products/           # Ejemplo: gestión de joyas del catálogo
 │   │   ├── controllers/    # Maneja Request/Response, llama al service.
 │   │   ├── services/       # Lógica de negocio pura (cálculos, validaciones, DB)
@@ -196,10 +197,10 @@ Todas las respuestas de la API siguen la misma estructura. Nunca rompas este con
 ```json
 {
   "success": true,
-  "data": { 
-    "id": "uuid", 
-    "name": "Anillo Zafiro", 
-    "images": ["uuid.webp"] 
+  "data": {
+    "id": "uuid",
+    "name": "Anillo Zafiro",
+    "images": ["uuid.webp"]
   },
   "message": "Joya creada correctamente."
 }
@@ -227,7 +228,6 @@ Gracias a `Sharp`, las imágenes se procesan para pesas un ~70% menos que el ori
 
 **¿Qué pasa si borro la carpeta `public/uploads`?**
 Perderás todas las fotos de las joyas de forma permanente. Realiza backups periódicos de esta carpeta en Hostinger.
-
 
 ---
 
@@ -328,6 +328,8 @@ npm run prisma:migrate
 
 # 3. (Opcional) Sembrar datos iniciales
 npm run prisma:seed
+# 4. Llena tu base de datos con datos de ejemplo y copia archivos relacionados.
+npm run db:seed
 ```
 
 O usa el comando combinado:
