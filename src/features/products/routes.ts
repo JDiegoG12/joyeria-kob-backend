@@ -137,9 +137,13 @@ const router = Router();
  *         specifications:
  *           type: string
  *           example: '{"requiresSize": true, "hasStones": true}'
+ *         imagesToDelete:
+ *           type: string
+ *           description: Arreglo de nombres de imágenes a eliminar, convertido a String JSON.
+ *           example: '["d4f6a1-xyz.webp", "a7b8c9-abc.webp"]'
  *         imageFiles:
  *           type: array
- *           description: Si se envían, reemplazarán a las imágenes actuales.
+ *           description: Archivos nuevos a agregar. Se sumarán a las imágenes existentes. Límite evaluado dinámicamente con las persistentes (máximo 4 en total).
  *           maxItems: 4
  *           items:
  *             type: string
@@ -153,16 +157,16 @@ const router = Router();
  *     tags:
  *       - Productos
  *     summary: Obtener todas las joyas
- *     description: Retorna el listado completo de joyas disponibles en el catálogo.Filtra automáticamente las joyas inactivas a menos que se solicite la vista de administrador.
+ *     description: Retorna el listado completo de joyas disponibles en el catálogo. Filtra automáticamente las joyas inactivas a menos que se solicite la vista de administrador.
  *     parameters:
  *       - in: query
  *         name: admin
  *         schema:
  *           type: boolean
- *         description: Si se establece en true, se mostrarán todas las joyas incluyendo las ocultas.
+ *         description: "Si se establece en true, se mostrarán todas las joyas incluyendo las ocultas."
  *         example: true
  *     responses:
- *       200:
+ *       '200':
  *         description: Listado de joyas obtenido correctamente.
  *         content:
  *           application/json:
