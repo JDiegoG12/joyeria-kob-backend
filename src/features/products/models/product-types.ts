@@ -21,7 +21,6 @@ export interface IProductBase {
   description: string;
   baseWeight: number;
   additionalValue: number;
-  laborCost: number;
   stock: number;
   specifications: IJewelSpecifications;
 }
@@ -40,6 +39,7 @@ export interface ICreateProductDTO extends IProductBase {
  */
 export type IUpdateProductDTO = Partial<ICreateProductDTO> & {
   status?: ProductStatus;
+  imagesToDelete?: string[]; // Imágenes a borrar del almacenamiento y la BD
 };
 
 /**
@@ -60,4 +60,5 @@ export type IProductCreateRaw = IRawInput<Omit<ICreateProductDTO, 'images'>>;
  */
 export type IProductUpdateRaw = Partial<IProductCreateRaw> & {
   status?: string; // El status también viene como string
+  imagesToDelete?: string; // Llega como string desde el FormData (ej: '["img1.webp", "img2.webp"]')
 };

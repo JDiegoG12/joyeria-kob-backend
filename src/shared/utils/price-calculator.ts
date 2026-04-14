@@ -11,12 +11,9 @@
 export const calculateSuggestedPrice = (
   weight: number,
   goldPrice: number,
-  laborPricePerGram: number,
   additionalValue: number,
 ): number => {
-  const goldCost = weight * goldPrice;
-  const laborCost = weight * laborPricePerGram;
-  const total = goldCost + laborCost + additionalValue;
+  const total = weight * goldPrice + additionalValue;
 
   return Math.round(total);
 };

@@ -6,28 +6,24 @@ const prisma = new PrismaClient();
 const calculateSuggestedPrice = (
   weight: number,
   goldPrice: number,
-  laborCost: number,
   additionalValue: number,
 ): number => {
-  const goldCost = weight * goldPrice;
-  const total = goldCost + laborCost + additionalValue;
+  const total = weight * goldPrice + additionalValue;
   return Math.round(total);
 };
 
 async function main() {
   console.log('Iniciando la siembra de la base de datos...');
 
-  // 1. Sembrar Configuración del Sistema (Precio del Oro y Costo de Labor)
+  // 1. Sembrar Configuración del Sistema (Precio del Oro)
   const systemSettings = await prisma.systemSetting.upsert({
     where: { id: 1 },
     update: {
       goldPricePerGram: 350000,
-      defaultLaborCost: 80000,
     },
     create: {
       id: 1,
       goldPricePerGram: 350000,
-      defaultLaborCost: 80000,
     },
   });
   console.log('Configuraciones del sistema inicializadas.');
@@ -84,7 +80,6 @@ async function main() {
         'Clásico anillo de compromiso con un diamante solitario, fabricado en oro de 18k.',
       baseWeight: 4.5,
       additionalValue: 250000, // Valor del diamante
-      laborCost: 120000,
       stock: 10,
       specifications: { Talla: '6', 'Quilates Diamante': '0.5' },
       images: ['anillo-solitario-1.webp', 'anillo-solitario-2.webp'],
@@ -96,7 +91,6 @@ async function main() {
         'Elegantes aretes tipo argolla, perfectos para el día a día.',
       baseWeight: 3.0,
       additionalValue: 0,
-      laborCost: systemSettings.defaultLaborCost.toNumber(),
       stock: 25,
       specifications: { Diámetro: '2cm' },
       images: ['aretes-argollas-1.webp'],
@@ -107,7 +101,6 @@ async function main() {
       description: 'Sofisticada cadena de oro con un tradicional tejido chino.',
       baseWeight: 10.0,
       additionalValue: 0,
-      laborCost: 200000,
       stock: 5,
       specifications: { Longitud: '50cm', Ancho: '3mm' },
       images: ['cadena-chino-1.webp'],
@@ -118,7 +111,6 @@ async function main() {
       description: 'Moderna pulsera de eslabones grandes en oro de 18k.',
       baseWeight: 8.2,
       additionalValue: 0,
-      laborCost: 150000,
       stock: 8,
       specifications: { Longitud: '19cm' },
       images: ['pulsera-eslabones-1.webp'],
@@ -129,7 +121,6 @@ async function main() {
       description: 'Dije clásico de cruz, ideal para cadenas delgadas.',
       baseWeight: 1.5,
       additionalValue: 0,
-      laborCost: systemSettings.defaultLaborCost.toNumber(),
       stock: 0, // Producto agotado
       specifications: { Alto: '2.5cm', Ancho: '1.5cm' },
       images: ['dije-cruz-1.webp'],
@@ -140,7 +131,6 @@ async function main() {
       description: 'Set de herrajes de oro para fabricación de joyas.',
       baseWeight: 0.5,
       additionalValue: 0,
-      laborCost: 10000,
       stock: 0, // Este producto estará agotado (OUT_OF_STOCK)
       specifications: { Tipo: 'Cierre de mosquetón' },
       images: ['herrajes-de-oro.webp'],
@@ -152,7 +142,6 @@ async function main() {
         'Anillo de oro con rubí. Producto de muestra, no visible en tienda.',
       baseWeight: 6.0,
       additionalValue: 400000, // Valor del rubí
-      laborCost: 180000,
       stock: 3, // Tiene stock, pero está oculto
       status: 'HIDDEN', // Estado asignado manualmente
       specifications: { Talla: '7', 'Quilates Rubí': '1.2' },
@@ -174,7 +163,6 @@ async function main() {
       const calculatedPrice = calculateSuggestedPrice(
         p.baseWeight,
         systemSettings.goldPricePerGram.toNumber(),
-        p.laborCost,
         p.additionalValue,
       );
 
@@ -183,7 +171,6 @@ async function main() {
         description: p.description,
         baseWeight: p.baseWeight,
         additionalValue: p.additionalValue,
-        laborCost: p.laborCost,
         stock: p.stock,
         status: p.status ?? (p.stock > 0 ? 'AVAILABLE' : 'OUT_OF_STOCK'),
         specifications: p.specifications,
