@@ -9,8 +9,9 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": ".",
+    "types": ["node", "jest"]
   },
-  "include": ["src"],
+  "include": ["src", "prisma", "jest.config.js"],
   "exclude": ["node_modules", "dist"]
 }
