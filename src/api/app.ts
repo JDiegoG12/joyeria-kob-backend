@@ -3,6 +3,7 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from '../config/swagger.config';
 import productRouter from '../features/products/routes';
 import authRouter from '../features/users/routes';
+import adminRouter from '../features/admin/routes';
 import categoryRouter from '../features/categories/routes';
 import { errorHandler } from './middlewares/error.middleware';
 import path from 'path';
@@ -28,6 +29,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/products', productRouter);
 app.use('/api/categories', categoryRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/admin', adminRouter);
 
 /**
  * @openapi

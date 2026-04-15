@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { UserRole } from '@prisma/client';
+import { ERROR_CODES } from '../../shared/constants/error-codes';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-for-dev';
 
@@ -27,7 +28,7 @@ export const authMiddleware = (
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({
       success: false,
-      error: 'UNAUTHORIZED',
+      error: ERROR_CODES.UNAUTHORIZED,
       message: 'No se proveyó un token o el formato es incorrecto.',
     });
   }
@@ -46,7 +47,7 @@ export const authMiddleware = (
 
     return res.status(401).json({
       success: false,
-      error: 'UNAUTHORIZED',
+      error: ERROR_CODES.UNAUTHORIZED,
       message: 'Token inválido o expirado.',
     });
   }

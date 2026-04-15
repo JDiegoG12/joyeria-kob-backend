@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../config/prisma';
 import { RegisterRequestDTO } from '../dtos/auth.dto';
 import { User } from '../models/user.model';
-
-const prisma = new PrismaClient();
 
 /**
  * Busca un usuario por su dirección de email.

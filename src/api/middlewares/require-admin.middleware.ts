@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { ERROR_CODES } from '../../shared/constants/error-codes';
 
 /**
  * Middleware para autorizar a usuarios administradores.
@@ -17,7 +18,7 @@ export const requireAdmin = (
   if (req.user?.role !== 'ADMIN') {
     return res.status(403).json({
       success: false,
-      error: 'FORBIDDEN',
+      error: ERROR_CODES.FORBIDDEN,
       message: 'Acceso denegado. Se requieren privilegios de administrador.',
     });
   }
