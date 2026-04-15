@@ -1,11 +1,9 @@
 import { Router } from 'express';
-import { uploadJewelImages } from '../../api/middlewares/upload.middleware';
 import {
-  getProducts,
-  getProduct,
-  postProduct,
-  removeProduct,
-  putProduct,
+    getProducts,
+    getProduct,
+    postProduct,
+    removeProduct,
 } from './controllers/product.controller';
 
 const router = Router();
@@ -19,125 +17,48 @@ const router = Router();
  *       properties:
  *         id:
  *           type: string
- *           format: uuid
- *           example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
- *         categoryId:
- *           type: integer
- *           example: 1
+ *           example: "1"
  *         name:
  *           type: string
- *           example: "Anillo Solitario Zafiro Real"
+ *           example: Anillo Esmeralda Colonial
  *         description:
  *           type: string
- *           example: "Anillo en oro blanco de 18k con zafiro central."
- *         baseWeight:
+ *           example: Anillo en oro de 18k con esmeralda colombiana certificada.
+ *         priceCop:
  *           type: number
- *           example: 4.5
- *         additionalValue:
- *           type: number
- *           example: 1200000
- *         calculatedPrice:
- *           type: number
- *           example: 3225000
+ *           example: 4500000
+ *         material:
+ *           type: string
+ *           enum: [oro, plata, platino]
+ *           example: oro
  *         stock:
- *           type: integer
- *           example: 5
- *         status:
- *           type: string
- *           enum: [AVAILABLE, OUT_OF_STOCK, HIDDEN]
- *           example: AVAILABLE
- *         specifications:
- *           type: object
- *           example: { "requiresSize": true, "hasStones": true, "stoneType": "Zafiro" }
- *         images:
- *           type: array
- *           items:
- *             type: string
- *           example: ["https://res.cloudinary.com/joyeria/image1.jpg"]
- *         createdAt:
- *           type: string
- *           format: date-time
- *
+ *           type: number
+ *           example: 3
  *     ProductInput:
  *       type: object
  *       required:
- *         - categoryId
  *         - name
  *         - description
- *         - baseWeight
- *         - additionalValue
+ *         - priceCop
+ *         - material
  *         - stock
- *         - specifications
- *         - images
  *       properties:
- *         categoryId:
- *           type: integer
- *           example: 1
  *         name:
  *           type: string
- *           example: "Anillo Esmeralda Colonial"
+ *           example: Pulsera Platino
  *         description:
  *           type: string
- *           example: "Anillo en oro de 18k con esmeralda colombiana certificada."
- *         baseWeight:
+ *           example: Pulsera artesanal en platino con acabado mate.
+ *         priceCop:
  *           type: number
- *           example: 3.8
- *         additionalValue:
- *           type: number
- *           example: 850000
+ *           example: 7200000
+ *         material:
+ *           type: string
+ *           enum: [oro, plata, platino]
+ *           example: platino
  *         stock:
- *           type: integer
- *           example: 10
- *         specifications:
- *           type: object
- *           example: { "requiresSize": true, "hasStones": true }
- *         images:
- *           type: array
- *           maxItems: 5
- *           items:
- *             type: string
- *           example: ["https://cloudinary.com/img.jpg"]
- *
- *     ProductUpdateInput:
- *       type: object
- *       description: Todos los campos son opcionales para permitir actualizaciones parciales.
- *       properties:
- *         categoryId:
- *           type: integer
- *           example: 1
- *         name:
- *           type: string
- *           example: "Anillo Zafiro Actualizado"
- *         description:
- *           type: string
- *           example: "Descripción corregida."
- *         baseWeight:
  *           type: number
- *           example: 4.5
- *         additionalValue:
- *           type: number
- *           example: 1500000
- *         stock:
- *           type: integer
- *           example: 0
- *         status:
- *           type: string
- *           enum: [AVAILABLE, OUT_OF_STOCK, HIDDEN]
- *           example: HIDDEN
- *         specifications:
- *           type: string
- *           example: '{"requiresSize": true, "hasStones": true}'
- *         imagesToDelete:
- *           type: string
- *           description: Arreglo de nombres de imágenes a eliminar, convertido a String JSON.
- *           example: '["d4f6a1-xyz.webp", "a7b8c9-abc.webp"]'
- *         imageFiles:
- *           type: array
- *           description: Archivos nuevos a agregar. Se sumarán a las imágenes existentes. Límite evaluado dinámicamente con las persistentes (máximo 5 en total).
- *           maxItems: 5
- *           items:
- *             type: string
- *             format: binary
+ *           example: 5
  */
 
 /**
@@ -147,16 +68,9 @@ const router = Router();
  *     tags:
  *       - Productos
  *     summary: Obtener todas las joyas
- *     description: Retorna el listado completo de joyas disponibles en el catálogo. Filtra automáticamente las joyas inactivas a menos que se solicite la vista de administrador.
- *     parameters:
- *       - in: query
- *         name: admin
- *         schema:
- *           type: boolean
- *         description: "Si se establece en true, se mostrarán todas las joyas incluyendo las ocultas."
- *         example: true
+ *     description: Retorna el listado completo de joyas disponibles en el catálogo.
  *     responses:
- *       '200':
+ *       200:
  *         description: Listado de joyas obtenido correctamente.
  *         content:
  *           application/json:
@@ -170,12 +84,6 @@ const router = Router();
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Product'
- *                 message:
- *                   type: string
- *                   example: "Catálogo obtenido correctamente."
- *                 error:
- *                   type: string
- *                   example: "INTERNAL_ERROR"
  */
 router.get('/', getProducts);
 
@@ -186,15 +94,15 @@ router.get('/', getProducts);
  *     tags:
  *       - Productos
  *     summary: Obtener una joya por ID
- *     description: Retorna los datos completos de una joya específica usando su UUID.
+ *     description: Retorna los datos completos de una joya específica.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: UUID de la joya
- *         example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+ *         description: ID único de la joya
+ *         example: "1"
  *     responses:
  *       200:
  *         description: Joya encontrada.
@@ -208,12 +116,6 @@ router.get('/', getProducts);
  *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Product'
- *                 message:
- *                   type: string
- *                   example: "Producto obtenido correctamente."
- *                 error:
- *                   type: string
- *                   example: "PRODUCT_NOT_FOUND"
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
@@ -225,42 +127,14 @@ router.get('/:id', getProduct);
  *   post:
  *     tags:
  *       - Productos
- *     summary: Crear una nueva joya con imágenes
- *     description: Agrega una nueva joya cargando archivos reales y calculando el precio automáticamente.
+ *     summary: Crear una nueva joya
+ *     description: Agrega una nueva joya al catálogo de Joyería KOB.
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               categoryId:
- *                 type: integer
- *                 example: 1
- *               name:
- *                 type: string
- *                 example: "Anillo Zafiro"
- *               description:
- *                 type: string
- *                 example: "Oro 18k"
- *               baseWeight:
- *                 type: number
- *                 example: 4.5
- *               additionalValue:
- *                 type: number
- *                 example: 500000
- *               stock:
- *                 type: integer
- *                 example: 5
- *               specifications:
- *                 type: string
- *                 example: '{"requiresSize":true}'
- *               imageFiles:
- *                 type: array
- *                 maxItems: 5
- *                 items:
- *                   type: string
- *                   format: binary
+ *             $ref: '#/components/schemas/ProductInput'
  *     responses:
  *       201:
  *         description: Joya creada correctamente.
@@ -274,15 +148,24 @@ router.get('/:id', getProduct);
  *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Product'
+ *       400:
+ *         description: Faltan campos obligatorios.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: MISSING_FIELDS
  *                 message:
  *                   type: string
- *                   example: "Joya creada y precio calculado correctamente."
- *       400:
- *         description: Validación incorrecta de datos.
- *       500:
- *         description: Error interno del servidor o problemas de configuración del precio del oro.
+ *                   example: Todos los campos son obligatorios.
  */
-router.post('/', uploadJewelImages, postProduct);
+router.post('/', postProduct);
 
 /**
  * @openapi
@@ -291,15 +174,15 @@ router.post('/', uploadJewelImages, postProduct);
  *     tags:
  *       - Productos
  *     summary: Eliminar una joya
- *     description: Elimina permanentemente una joya del catálogo por su UUID.
+ *     description: Elimina permanentemente una joya del catálogo por su ID.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: UUID de la joya a eliminar
- *         example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+ *         description: ID único de la joya a eliminar
+ *         example: "1"
  *     responses:
  *       200:
  *         description: Joya eliminada correctamente.
@@ -313,58 +196,10 @@ router.post('/', uploadJewelImages, postProduct);
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: "Producto eliminado correctamente."
- *                 error:
- *                   type: string
- *                   example: "PRODUCT_NOT_FOUND"
+ *                   example: Producto eliminado correctamente.
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
 router.delete('/:id', removeProduct);
-
-/**
- * @openapi
- * /api/products/{id}:
- *   put:
- *     tags:
- *       - Productos
- *     summary: Actualizar una joya existente
- *     description: Permite modificar cualquier campo de la joya. Si se envían imágenes, las anteriores se borrarán físicamente del servidor. El precio se recalcula automáticamente si cambian los valores base.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: UUID de la joya a actualizar
- *     requestBody:
- *       content:
- *         multipart/form-data:
- *           schema:
- *             $ref: '#/components/schemas/ProductUpdateInput'
- *     responses:
- *       200:
- *         description: Joya actualizada correctamente.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   $ref: '#/components/schemas/Product'
- *                 message:
- *                   type: string
- *                   example: "Joya actualizada y precio recalculado correctamente."
- *       400:
- *         description: Constraint de negocio fallida (ej. excede límite de imágenes).
- *       404:
- *         $ref: '#/components/responses/NotFoundError'
- *       500:
- *         description: Error interno del servidor.
- */
-router.put('/:id', uploadJewelImages, putProduct);
 
 export default router;

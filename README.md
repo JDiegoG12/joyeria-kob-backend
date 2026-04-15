@@ -8,12 +8,11 @@ API REST de la plataforma Joyería KOB, construida con Express 5, TypeScript 6 y
 
 Antes de clonar el repositorio, asegúrate de tener instaladas estas versiones exactas en tu máquina:
 
-| Herramienta | Versión requerida  | Verificar con     |
-| ----------- | ------------------ | ----------------- |
-| Node.js     | v22.19.0           | `node -v`         |
-| npm         | v10.9.3            | `npm -v`          |
-| MySQL       | v8.0+              | `mysql --version` |
-| Git         | Cualquier reciente | `git --version`   |
+| Herramienta | Versión requerida  | Verificar con   |
+| ----------- | ------------------ | --------------- |
+| Node.js     | v22.19.0           | `node -v`       |
+| npm         | v10.9.3            | `npm -v`        |
+| Git         | Cualquier reciente | `git --version` |
 
 > Si tu versión de Node no coincide, usa [nvm-windows](https://github.com/coreybutler/nvm-windows) (Windows) o [nvm](https://github.com/nvm-sh/nvm) (Mac/Linux) para cambiar de versión sin afectar otros proyectos.
 
@@ -67,9 +66,8 @@ Abre el archivo `.env` recién creado y completa los valores según tu entorno l
 
 ```env
 PORT=4000
-DB_URL= # URL de conexión a la base de datos MySQL
+DB_URL=          # URL de conexión a la base de datos
 JWT_SECRET=      # Clave secreta para firmar los tokens JWT
-APP_URL=http://localhost:4000  # URL base para servir imágenes
 ```
 
 > El archivo `.env` nunca se sube al repositorio. Si necesitas agregar una nueva variable de entorno, agrégala también en `.env.example` con el valor vacío para que el equipo sepa que existe.
@@ -93,17 +91,13 @@ El servidor quedará corriendo en `http://localhost:4000`.
 
 ## Scripts disponibles
 
-| Comando                   | Descripción                                                                       |
-| ------------------------- | --------------------------------------------------------------------------------- |
-| `npm run dev`             | Inicia el servidor con `nodemon` — se reinicia automáticamente al guardar cambios |
-| `npm run build`           | Compila TypeScript a JavaScript plano en la carpeta `/dist`                       |
-| `npm run start`           | Ejecuta el build compilado (usar en producción)                                   |
-| `npm run lint`            | Analiza el código con ESLint y reporta errores                                    |
-| `npm run format`          | Formatea automáticamente todos los archivos `src/**/*.ts`                         |
-| `npm run db:setup`        | Configura la base de datos: genera cliente, ejecuta migraciones y siembra datos   |
-| `npm run prisma:generate` | Genera el cliente de Prisma desde el esquema                                      |
-| `npm run prisma:migrate`  | Ejecuta las migraciones de base de datos                                          |
-| `npm run prisma:seed`     | Siembra la base de datos con datos iniciales                                      |
+| Comando          | Descripción                                                                       |
+| ---------------- | --------------------------------------------------------------------------------- |
+| `npm run dev`    | Inicia el servidor con `nodemon` — se reinicia automáticamente al guardar cambios |
+| `npm run build`  | Compila TypeScript a JavaScript plano en la carpeta `/dist`                       |
+| `npm run start`  | Ejecuta el build compilado (usar en producción)                                   |
+| `npm run lint`   | Analiza el código con ESLint y reporta errores                                    |
+| `npm run format` | Formatea automáticamente todos los archivos `src/**/*.ts`                         |
 
 ---
 
@@ -114,8 +108,6 @@ El servidor quedará corriendo en `http://localhost:4000`.
 | Node.js            | v22.19.0 | Entorno de ejecución                         |
 | TypeScript         | ^6.0.2   | Tipado estático                              |
 | Express            | ^5.2.1   | Framework HTTP                               |
-| Prisma             | ^4.16.2  | ORM para base de datos                       |
-| MySQL              | v8.0+    | Base de datos relacional                     |
 | swagger-jsdoc      | ^6.2.8   | Genera la spec OpenAPI desde anotaciones     |
 | swagger-ui-express | ^5.0.1   | Sirve la UI interactiva de Swagger           |
 | Axios              | ^1.14.0  | Cliente HTTP para consumo de APIs externas   |
@@ -125,31 +117,12 @@ El servidor quedará corriendo en `http://localhost:4000`.
 | commitlint         | ^19.8.0  | Validación de mensajes de commit             |
 | nodemon            | ^3.1.14  | Reinicio automático en desarrollo            |
 | ts-node            | ^10.9.2  | Ejecuta TypeScript directamente sin compilar |
-| Multer             | ^1.4.5   | Middleware para recepción de archivos        |
-
----
-
-## Gestión de Imágenes (Almacenamiento Local en Hostinger)
-
-Para maximizar el uso del almacenamiento de Hostinger y garantizar una carga ultra-rápida (UX Premium), el backend no guarda imágenes crudas. Sigue este flujo:
-
-1.  **Recepción**: `Multer` recibe los archivos en memoria.
-2.  **Procesamiento**: `Sharp` redimensiona a 1000px y convierte a formato `.webp` (80% calidad).
-3.  **Persistencia**: Se guardan en `public/uploads/products/`.
-4.  **Acceso**: Las imágenes son servidas como estáticos a través de la ruta `/uploads`.
-
-> **Nota para producción**: Asegúrate de que la carpeta `public/uploads` tenga permisos de escritura en tu servidor Hostinger.
 
 ---
 
 ## Estructura de carpetas
 
 ```
-public/
-└── uploads/         # Archivos multimedia (joyas) guardados localmente
-prisma/
-├── schema.prisma    # Esquema de la base de datos y configuración de Prisma
-└── seed.ts          # Script para sembrar datos iniciales
 src/
 ├── api/
 │   ├── app.ts              # Configuración de Express, middlewares y registro de rutas
@@ -157,15 +130,8 @@ src/
 ├── config/
 │   └── swagger.config.ts   # Configuración central de Swagger/OpenAPI
 ├── features/               # Módulos de negocio — uno por cada dominio
-│   ├── categories/         # Gestión de categorías jerárquicas
-│   │   ├── controllers/    # Maneja Request/Response, llama al facade.
-│   │   ├── facade/         # Implementa la interfaz, orquesta la lógica de negocio.
-│   │   ├── ports/          # Define las interfaces (contratos) del módulo.
-│   │   ├── services/       # Lógica de acceso a datos (consultas Prisma).
-│   │   └── routes.ts       # Define endpoints y contiene anotaciones @openapi
-│   │   └── tests/          # Pruebas unitarias y de integración.
 │   ├── products/           # Ejemplo: gestión de joyas del catálogo
-│   │   ├── controllers/    # Maneja Request/Response, llama al service.
+│   │   ├── controllers/    # Maneja Request/Response, llama al service
 │   │   ├── services/       # Lógica de negocio pura (cálculos, validaciones, DB)
 │   │   ├── models/         # Interfaces y tipos del dominio
 │   │   └── routes.ts       # Define endpoints y contiene anotaciones @openapi
@@ -178,9 +144,6 @@ src/
 
 ### Reglas de arquitectura
 
-- **Imágenes**: El nombre del archivo guardado en DB debe ser un UUID. Nunca usar el nombre original del cliente.
-- **Precios**: El `calculatedPrice` siempre debe ser procesado en el `service` antes de persistir, nunca enviado directamente por el cliente.
-- **Early Return**: Validar la existencia de archivos y campos obligatorios al inicio de cada función.
 - **El controller nunca habla con la base de datos.** Eso es responsabilidad del service.
 - **El service nunca conoce `Request` ni `Response`.** Solo recibe datos planos y retorna datos planos.
 - **Las rutas de un feature no importan nada de otro feature.** Si algo se comparte, va a `shared/`.
@@ -197,12 +160,8 @@ Todas las respuestas de la API siguen la misma estructura. Nunca rompas este con
 ```json
 {
   "success": true,
-  "data": {
-    "id": "uuid",
-    "name": "Anillo Zafiro",
-    "images": ["uuid.webp"]
-  },
-  "message": "Joya creada correctamente."
+  "data": { "id": "1", "name": "Anillo Esmeralda Colonial" },
+  "message": "Producto obtenido correctamente."
 }
 ```
 
@@ -215,19 +174,6 @@ Todas las respuestas de la API siguen la misma estructura. Nunca rompas este con
   "message": "La joya solicitada no existe en el catálogo."
 }
 ```
-
----
-
-## Preguntas frecuentes
-
-**¿Cómo accedo a las imágenes subidas?**
-Usa la URL base configurada en `.env` seguida de la ruta: `${APP_URL}/uploads/products/nombre-archivo.webp`.
-
-**¿Por qué mis imágenes pesan tan poco?**
-Gracias a `Sharp`, las imágenes se procesan para pesas un ~70% menos que el original sin pérdida de calidad perceptible, optimizando el ancho de banda del servidor.
-
-**¿Qué pasa si borro la carpeta `public/uploads`?**
-Perderás todas las fotos de las joyas de forma permanente. Realiza backups periódicos de esta carpeta en Hostinger.
 
 ---
 
@@ -311,128 +257,18 @@ app.use('/api/orders', orderRouter);
 
 ---
 
-## Configuración de la base de datos con Prisma
+## Módulo de productos — Ejemplo de referencia
 
-Este proyecto utiliza Prisma como ORM para interactuar con MySQL. Prisma maneja las migraciones, el esquema de la base de datos y la generación de tipos TypeScript.
+La carpeta `src/features/products/` contiene una implementación completa de ejemplo que ilustra cómo debe estructurarse cualquier módulo del proyecto. Incluye los cuatro patrones fundamentales de una API REST:
 
-### Primeros pasos con la base de datos
+| Endpoint            | Método   | Descripción                |
+| ------------------- | -------- | -------------------------- |
+| `/api/products`     | `GET`    | Listar todos los productos |
+| `/api/products/:id` | `GET`    | Obtener un producto por ID |
+| `/api/products`     | `POST`   | Crear un nuevo producto    |
+| `/api/products/:id` | `DELETE` | Eliminar un producto       |
 
-Después de configurar el `.env` con `DB_URL`, ejecuta:
-
-```bash
-# 1. Generar el cliente de Prisma (necesario después de cambiar el esquema)
-npm run prisma:generate
-
-# 2. Ejecutar migraciones para crear las tablas
-npm run prisma:migrate
-
-# 3. (Opcional) Sembrar datos iniciales
-npm run prisma:seed
-# 4. Llena tu base de datos con datos de ejemplo y copia archivos relacionados.
-npm run db:seed
-```
-
-O usa el comando combinado:
-
-```bash
-npm run db:setup
-```
-
-### Esquema de la base de datos
-
-El esquema está definido en `prisma/schema.prisma`. Incluye modelos para categorías jerárquicas y está configurado para MySQL.
-
-### Comandos útiles de Prisma
-
-- `npx prisma studio`: Abre una interfaz web para explorar la base de datos
-- `npx prisma db push`: Sincroniza el esquema con la base de datos (desarrollo)
-- `npx prisma migrate dev`: Crea y aplica una nueva migración
-- `npx prisma generate`: Regenera el cliente después de cambios en el esquema
-
----
-
-## Módulo de categorías
-
-La carpeta `src/features/categories/` contiene la implementación completa del módulo de categorías usando Prisma como ORM y MySQL como base de datos. Incluye operaciones CRUD completas con soporte para jerarquía de categorías (padre-hijo).
-
-**Este módulo es el ejemplo de referencia para la arquitectura del proyecto.** Demuestra la implementación completa de un feature con conexión a base de datos, validaciones de negocio y documentación.
-
-| Endpoint                       | Método   | Descripción                    |
-| ------------------------------ | -------- | ------------------------------ |
-| `/api/categories`              | `GET`    | Listar todas las categorías    |
-| `/api/categories/:id`          | `GET`    | Obtener una categoría por ID   |
-| `/api/categories/:id/children` | `GET`    | Obtener subcategorías directas |
-| `/api/categories`              | `POST`   | Crear una nueva categoría      |
-| `/api/categories/:id`          | `PUT`    | Actualizar una categoría       |
-| `/api/categories/:id`          | `DELETE` | Eliminar una categoría         |
-
-Este módulo demuestra la arquitectura completa del proyecto con las siguientes capas:
-
-- **Controller**: Maneja las peticiones HTTP y delega la lógica al facade.
-- **Facade**: Implementa la interfaz del `port`. Orquesta la lógica de negocio, realiza validaciones y maneja errores.
-- **Port**: Define la interfaz (el contrato) que el facade debe cumplir, permitiendo la inversión de dependencias.
-- **Service**: Contiene la lógica de acceso a datos, interactuando directamente con la base de datos a través de Prisma.
-- **Routes**: Define los endpoints y contiene la documentación OpenAPI/Swagger.
-
----
-
-## Pruebas (Testing)
-
-El proyecto utiliza **Jest** como framework de pruebas para garantizar la calidad y el correcto funcionamiento del código. Se incluyen tanto pruebas unitarias como de integración.
-
-### Ejecutar las pruebas
-
-Para ejecutar toda la suite de pruebas, utiliza el siguiente comando:
-
-```bash
-npm test
-```
-
-Esto buscará todos los archivos con la extensión `.test.ts` y los ejecutará.
-
-### Estructura y Filosofía de Pruebas
-
-- **Pruebas Unitarias**: Se centran en componentes aislados (ej. una función en un `service` o `facade`). Utilizan `mocks` para simular dependencias (como la base de datos) y asegurar que el componente se prueba de forma aislada.
-- **Pruebas de Integración**: Verifican que varios componentes funcionan juntos correctamente. Por ejemplo, simulan una petición HTTP a un endpoint y comprueban la respuesta final, recorriendo todas las capas (controller, facade, service).
-
-Todos los nuevos `features` o correcciones de `bugs` deben ir acompañados de sus respectivas pruebas.
-
----
-
-## Arquitectura de Puertos y Fachadas
-
-El `feature` de `categories` introduce un patrón de diseño basado en **Puertos y Adaptadores (Ports and Adapters)**, utilizando una **Fachada (Facade)** como punto de entrada a la lógica de negocio. Esta arquitectura promueve un código más limpio, desacoplado y fácil de mantener.
-
-### Puertos (`ports`)
-
-La carpeta `src/features/categories/ports/` define los **contratos** (interfaces de TypeScript) que la lógica de negocio debe cumplir. El archivo clave es `category.ports.ts`, que contiene la interfaz `ICategoryFacade`.
-
-```typescript
-// src/features/categories/ports/category.ports.ts
-
-export interface ICategoryFacade {
-  getAllCategories(): Promise<FacadeResult<CategoryWithRelations[]>>;
-  getCategoryById(id: number): Promise<FacadeResult<CategoryWithRelations>>;
-  createCategory(data: CreateCategoryInput): Promise<FacadeResult<Category>>;
-  // ... y otros métodos
-}
-```
-
-- **¿Qué es un puerto?** Es una definición agnóstica de la tecnología. La interfaz `ICategoryFacade` define "lo que el sistema debe hacer" (el qué), pero no "cómo lo hace".
-- **Beneficio**: Permite que los `controllers` dependan de esta abstracción (`ICategoryFacade`) en lugar de una implementación concreta. Esto facilita las pruebas y permite cambiar la implementación interna sin afectar a los `controllers`.
-
-### Fachada (`facade`)
-
-La carpeta `src/features/categories/facade/` contiene la **implementación** concreta del puerto. El archivo `category.facade.ts` implementa la interfaz `ICategoryFacade`.
-
-- **¿Qué es una fachada?** Es una clase que actúa como punto de entrada único y simplificado a la lógica de negocio de un `feature`. Orquesta las llamadas a uno o más `services`, realiza validaciones de negocio complejas y maneja la lógica de errores.
-- **Flujo de una petición**:
-  1. El `Controller` recibe la petición HTTP.
-  2. El `Controller` llama a un método de la `Facade` (a través de la interfaz del puerto).
-  3. La `Facade` llama al `Service` para interactuar con la base de datos.
-  4. La `Facade` procesa el resultado, maneja posibles errores y lo devuelve al `Controller`.
-
-Este patrón es el preferido para todos los nuevos `features` que contengan lógica de negocio compleja.
+> **Importante:** los datos de este módulo son ficticios y se almacenan en memoria (un arreglo en `product.service.ts`). Esto es intencional para que el ejemplo funcione sin necesitar una base de datos configurada. Cuando se implemente el módulo real de productos, el service debe reemplazarse con las consultas reales a la DB. El modelo, el controller y las rutas pueden tomarse como base y ajustarse a las necesidades reales del negocio.
 
 ---
 
@@ -489,7 +325,7 @@ Husky valida automáticamente el formato al hacer `git commit`. Un commit con fo
 
 | Elemento              | Formato            | Ejemplo                    |
 | --------------------- | ------------------ | -------------------------- |
-| Carpetas y archivos   | `kebab-case`       | `.ts`                      |
+| Carpetas y archivos   | `kebab-case`       | `product-service.ts`       |
 | Clases e interfaces   | `PascalCase`       | `IProduct`, `OrderService` |
 | Variables y funciones | `camelCase`        | `getProductById`           |
 | Constantes            | `UPPER_SNAKE_CASE` | `MAX_RETRY_LIMIT`          |
