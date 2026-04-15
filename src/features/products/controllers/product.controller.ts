@@ -1,82 +1,124 @@
-import { Request, Response } from 'express';
-import {
-    getAllProducts,
-    getProductById,
-    createProduct,
-    deleteProduct,
-} from '../services/product.service';
+import { Request, Response, NextFunction } from 'express';
+import { productFacade } from '../facade/product.facade';
 
 /**
- * Retorna todas las joyas del catálogo.
+ * Obtiene todos los productos del catálogo.
  */
-export const getProducts = (req: Request, res: Response): void => {
-    const data = getAllProducts();
-    res.json({ success: true, data });
+export const getProducts = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    // Si la URL tiene un query ?admin=true, lo interpretamos como que el usuario es admin y le mostramos todo el catálogo, incluyendo los ocultos. Si no, solo mostramos los disponibles.
+    const isAdmin = req.query.admin === 'true';
+    const result = await productFacade.getProducts(isAdmin);
+
+    res.status(result.status).json({
+      success: result.success,
+      data: result.data,
+      message: result.message,
+      ...(result.error && { error: result.error }),
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
- * Retorna una joya específica por su ID.
- * Responde 404 si no existe siguiendo el formato unificado del manual JADI.
+ * Obtiene un producto específico.
  */
-export const getProduct = (req: Request, res: Response): void => {
-    const id = String(req.params['id']);
-    const product = getProductById(id);
+export const getProduct = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const result = await productFacade.getProduct(id);
 
-    if (!product) {
-        res.status(404).json({
-            success: false,
-            error: 'PRODUCT_NOT_FOUND',
-            message: 'La joya solicitada no existe en el catálogo.',
-        });
-        return;
-    }
-
-    res.json({ success: true, data: product });
+    res.status(result.status).json({
+      success: result.success,
+      data: result.data,
+      message: result.message,
+      ...(result.error && { error: result.error }),
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
- * Crea una nueva joya en el catálogo.
- * Responde 400 si faltan campos obligatorios.
+ * Crea una nueva joya en el sistema.
  */
-export const postProduct = (req: Request, res: Response): void => {
-    const { name, description, priceCop, material, stock } = req.body as {
-        name: string;
-        description: string;
-        priceCop: number;
-        material: 'oro' | 'plata' | 'platino';
-        stock: number;
-    };
+export const postProduct = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const productData = req.body;
+    // Capturamos los archivos de imagen inyectados por el middleware de Multer
+    const files = req.files as Express.Multer.File[];
 
-    if (!name || !description || !priceCop || !material || stock === undefined) {
-        res.status(400).json({
-            success: false,
-            error: 'MISSING_FIELDS',
-            message:
-                'Todos los campos son obligatorios: name, description, priceCop, material, stock.',
-        });
-        return;
-    }
+    const result = await productFacade.createProduct(productData, files);
 
-    const newProduct = createProduct({ name, description, priceCop, material, stock });
-    res.status(201).json({ success: true, data: newProduct });
+    res.status(result.status).json({
+      success: result.success,
+      data: result.data,
+      message: result.message,
+      ...(result.error && { error: result.error }),
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
- * Elimina una joya del catálogo por su ID.
- * Responde 404 si no existe.
+ * Elimina un producto permanentemente.
  */
-export const removeProduct = (req: Request, res: Response): void => {
-    const id = String(req.params['id']);
-    const deleted = deleteProduct(id);
+export const removeProduct = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const result = await productFacade.deleteProduct(id);
 
-    if (!deleted) {
-        res.status(404).json({
-            success: false,
-            error: 'PRODUCT_NOT_FOUND',
-            message: 'La joya solicitada no existe en el catálogo.',
-        });
-        return;
-    }
+    res.status(result.status).json({
+      success: result.success,
+      message: result.message,
+      ...(result.error && { error: result.error }),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-    res.json({ success: true, message: 'Producto eliminado correctamente.' });
+/**
+ * Actualiza una joya existente.
+ * Soporta actualización parcial (PATCH) y total (PUT).
+ */
+export const putProduct = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const productData = req.body;
+    const files = req.files as Express.Multer.File[] | undefined;
+
+    const result = await productFacade.updateProduct(id, productData, files);
+
+    res.status(result.status).json({
+      success: result.success,
+      data: result.data,
+      message: result.message,
+      ...(result.error && { error: result.error }),
+    });
+  } catch (error) {
+    next(error);
+  }
 };
