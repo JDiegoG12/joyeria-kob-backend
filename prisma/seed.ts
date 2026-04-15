@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -12,8 +13,38 @@ const calculateSuggestedPrice = (
   return Math.round(total);
 };
 
+async function seedUsers() {
+  console.log('Iniciando la siembra de usuarios...');
+
+  const adminPassword = await bcrypt.hash('Admin123!', 10);
+  await prisma.user.upsert({
+    where: { email: 'admin@kob.com' },
+    update: { password: adminPassword },
+    create: {
+      email: 'admin@kob.com',
+      password: adminPassword,
+      role: UserRole.ADMIN,
+    },
+  });
+
+  const clientPassword = await bcrypt.hash('Cliente123!', 10);
+  await prisma.user.upsert({
+    where: { email: 'cliente@test.com' },
+    update: { password: clientPassword },
+    create: {
+      email: 'cliente@test.com',
+      password: clientPassword,
+      role: UserRole.CLIENT,
+    },
+  });
+
+  console.log('Usuarios de ejemplo insertados.');
+}
+
 async function main() {
   console.log('Iniciando la siembra de la base de datos...');
+
+  await seedUsers();
 
   // 1. Sembrar Configuración del Sistema (Precio del Oro)
   const systemSettings = await prisma.systemSetting.upsert({
