@@ -93,7 +93,7 @@ const router = Router();
  *           example: { "requiresSize": true, "hasStones": true }
  *         images:
  *           type: array
- *           maxItems: 4
+ *           maxItems: 5
  *           items:
  *             type: string
  *           example: ["https://cloudinary.com/img.jpg"]
@@ -133,8 +133,8 @@ const router = Router();
  *           example: '["d4f6a1-xyz.webp", "a7b8c9-abc.webp"]'
  *         imageFiles:
  *           type: array
- *           description: Archivos nuevos a agregar. Se sumarán a las imágenes existentes. Límite evaluado dinámicamente con las persistentes (máximo 4 en total).
- *           maxItems: 4
+ *           description: Archivos nuevos a agregar. Se sumarán a las imágenes existentes. Límite evaluado dinámicamente con las persistentes (máximo 5 en total).
+ *           maxItems: 5
  *           items:
  *             type: string
  *             format: binary
@@ -173,6 +173,9 @@ const router = Router();
  *                 message:
  *                   type: string
  *                   example: "Catálogo obtenido correctamente."
+ *                 error:
+ *                   type: string
+ *                   example: "INTERNAL_ERROR"
  */
 router.get('/', getProducts);
 
@@ -205,6 +208,12 @@ router.get('/', getProducts);
  *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Product'
+ *                 message:
+ *                   type: string
+ *                   example: "Producto obtenido correctamente."
+ *                 error:
+ *                   type: string
+ *                   example: "PRODUCT_NOT_FOUND"
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
@@ -248,13 +257,30 @@ router.get('/:id', getProduct);
  *                 example: '{"requiresSize":true}'
  *               imageFiles:
  *                 type: array
- *                 maxItems: 4
+ *                 maxItems: 5
  *                 items:
  *                   type: string
  *                   format: binary
  *     responses:
  *       201:
  *         description: Joya creada correctamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Product'
+ *                 message:
+ *                   type: string
+ *                   example: "Joya creada y precio calculado correctamente."
+ *       400:
+ *         description: Validación incorrecta de datos.
+ *       500:
+ *         description: Error interno del servidor o problemas de configuración del precio del oro.
  */
 router.post('/', uploadJewelImages, postProduct);
 
@@ -287,7 +313,10 @@ router.post('/', uploadJewelImages, postProduct);
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: Producto eliminado correctamente.
+ *                   example: "Producto eliminado correctamente."
+ *                 error:
+ *                   type: string
+ *                   example: "PRODUCT_NOT_FOUND"
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
@@ -316,8 +345,25 @@ router.delete('/:id', removeProduct);
  *     responses:
  *       200:
  *         description: Joya actualizada correctamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Product'
+ *                 message:
+ *                   type: string
+ *                   example: "Joya actualizada y precio recalculado correctamente."
+ *       400:
+ *         description: Constraint de negocio fallida (ej. excede límite de imágenes).
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         description: Error interno del servidor.
  */
 router.put('/:id', uploadJewelImages, putProduct);
 

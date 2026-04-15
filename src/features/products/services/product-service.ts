@@ -62,7 +62,6 @@ export const createProductService = async (
 
   if (!systemSettings) {
     throw {
-      status: 500,
       code: 'SETTINGS_NOT_FOUND',
       message: 'No se encontró la configuración base del precio de oro.',
     };
@@ -119,7 +118,6 @@ export const deleteProductService = async (id: string) => {
 
   if (!product) {
     throw {
-      status: 404,
       code: 'PRODUCT_NOT_FOUND',
       message: 'El producto a eliminar no existe.',
     };
@@ -164,7 +162,6 @@ export const updateProductService = async (
 
   if (!currentProduct) {
     throw {
-      status: 404,
       code: 'PRODUCT_NOT_FOUND',
       message: 'La joya o variación solicitada no fue hallada en el sistema.',
     };
@@ -214,11 +211,10 @@ export const updateProductService = async (
     finalImages = [...finalImages, ...newImageNames];
   }
 
-  if (finalImages.length > 4) {
+  if (finalImages.length > 5) {
     throw {
-      status: 400,
       code: 'BUSINESS_CONSTRAINT_FAILED',
-      message: `Cuota de capacidad gráfica superada. Límite: 4 imágenes permitidas por variante. Valor actual calculado: ${finalImages.length}.`,
+      message: `Cuota de capacidad gráfica superada. Límite: 5 imágenes permitidas por variante. Valor actual calculado: ${finalImages.length}.`,
     };
   }
 

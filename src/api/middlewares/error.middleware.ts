@@ -23,7 +23,7 @@ export const errorHandler = (
       return res.status(400).json({
         success: false,
         error: 'TOO_MANY_IMAGES',
-        message: 'No puedes subir más de 4 imágenes por joya.',
+        message: 'No puedes subir más de 5 imágenes por joya.',
       });
     }
   }
