@@ -36,9 +36,6 @@ const router = Router();
  *         additionalValue:
  *           type: number
  *           example: 1200000
- *         laborCost:
- *           type: number
- *           example: 0
  *         calculatedPrice:
  *           type: number
  *           example: 3225000
@@ -69,7 +66,6 @@ const router = Router();
  *         - description
  *         - baseWeight
  *         - additionalValue
- *         - laborCost
  *         - stock
  *         - specifications
  *         - images
@@ -89,9 +85,6 @@ const router = Router();
  *         additionalValue:
  *           type: number
  *           example: 850000
- *         laborCost:
- *           type: number
- *           example: 0
  *         stock:
  *           type: integer
  *           example: 10
@@ -124,9 +117,6 @@ const router = Router();
  *         additionalValue:
  *           type: number
  *           example: 1500000
- *         laborCost:
- *           type: number
- *           example: 120000
  *         stock:
  *           type: integer
  *           example: 0
@@ -250,9 +240,6 @@ router.get('/:id', getProduct);
  *               additionalValue:
  *                 type: number
  *                 example: 500000
- *               laborCost:
- *                 type: number
- *                 example: 100000
  *               stock:
  *                 type: integer
  *                 example: 5
