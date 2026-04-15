@@ -1,4 +1,9 @@
-import { IProductFacade, FacadeResult } from '../ports/product.ports';
+import { Product } from '@prisma/client';
+import {
+  IProductFacade,
+  FacadeResult,
+  ProductWithCategory,
+} from '../ports/product.ports';
 import {
   getAllProductsService,
   getProductByIdService,
@@ -9,8 +14,12 @@ import {
 import { IProductCreateRaw, IProductUpdateRaw } from '../models/product-types';
 import { ERROR_CODES } from '../../../shared/constants/error-codes';
 
+type ServiceError = { code?: string; status?: number; message?: string };
+
 class ProductFacade implements IProductFacade {
-  async getProducts(isAdmin: boolean): Promise<FacadeResult<any>> {
+  async getProducts(
+    isAdmin: boolean,
+  ): Promise<FacadeResult<ProductWithCategory[]>> {
     try {
       const products = await getAllProductsService(isAdmin);
       return {
@@ -30,7 +39,7 @@ class ProductFacade implements IProductFacade {
     }
   }
 
-  async getProduct(id: string): Promise<FacadeResult<any>> {
+  async getProduct(id: string): Promise<FacadeResult<ProductWithCategory>> {
     try {
       const product = await getProductByIdService(id);
       if (!product) {
@@ -61,7 +70,7 @@ class ProductFacade implements IProductFacade {
   async createProduct(
     data: IProductCreateRaw,
     files: Express.Multer.File[] | undefined,
-  ): Promise<FacadeResult<any>> {
+  ): Promise<FacadeResult<Product>> {
     if (!files || files.length === 0) {
       return {
         success: false,
@@ -79,9 +88,10 @@ class ProductFacade implements IProductFacade {
         message: 'Joya creada y precio calculado correctamente.',
         status: 201,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[ProductFacade] createProduct error:', error);
-      const isSettingsError = error.code === 'SETTINGS_NOT_FOUND';
+      const err = error as ServiceError;
+      const isSettingsError = err.code === 'SETTINGS_NOT_FOUND';
       return {
         success: false,
         error: isSettingsError
@@ -90,7 +100,7 @@ class ProductFacade implements IProductFacade {
         message: isSettingsError
           ? 'No se encontró la configuración base del precio de oro.'
           : 'Error al crear la joya.',
-        status: error.status || 500,
+        status: err.status || 500,
       };
     }
   }
@@ -103,11 +113,11 @@ class ProductFacade implements IProductFacade {
         message: 'Producto eliminado correctamente.',
         status: 200,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[ProductFacade] deleteProduct error:', error);
+      const err = error as ServiceError;
 
-      const notFound =
-        error.code === 'PRODUCT_NOT_FOUND' || error.code === 'P2025';
+      const notFound = err.code === 'PRODUCT_NOT_FOUND' || err.code === 'P2025';
       if (notFound) {
         return {
           success: false,
@@ -130,7 +140,7 @@ class ProductFacade implements IProductFacade {
     id: string,
     data: IProductUpdateRaw,
     files: Express.Multer.File[] | undefined,
-  ): Promise<FacadeResult<any>> {
+  ): Promise<FacadeResult<Product>> {
     try {
       const updatedProduct = await updateProductService(id, data, files);
       return {
@@ -139,10 +149,11 @@ class ProductFacade implements IProductFacade {
         message: 'Joya actualizada y precio recalculado correctamente.',
         status: 200,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[ProductFacade] updateProduct error:', error);
+      const err = error as ServiceError;
 
-      if (error.code === 'PRODUCT_NOT_FOUND') {
+      if (err.code === 'PRODUCT_NOT_FOUND') {
         return {
           success: false,
           error: ERROR_CODES.PRODUCT_NOT_FOUND,
@@ -152,11 +163,11 @@ class ProductFacade implements IProductFacade {
         };
       }
 
-      if (error.code === 'BUSINESS_CONSTRAINT_FAILED') {
+      if (err.code === 'BUSINESS_CONSTRAINT_FAILED') {
         return {
           success: false,
           error: ERROR_CODES.BUSINESS_CONSTRAINT_FAILED,
-          message: error.message,
+          message: err.message,
           status: 400,
         };
       }
