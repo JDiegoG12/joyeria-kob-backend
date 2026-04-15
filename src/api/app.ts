@@ -2,21 +2,12 @@ import express, { Application, Request, Response } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from '../config/swagger.config';
 import productRouter from '../features/products/routes';
-import categoryRouter from '../features/categories/routes';
-import { errorHandler } from './middlewares/error.middleware';
-import path from 'path';
-import cors from 'cors';
+
 /**
  * Instancia principal de la aplicación Express para la Joyería KOB.
  */
 const app: Application = express();
-//esto es pa que el cors del frontend no de problemas
-app.use(
-  cors({
-    origin: 'http://localhost:5173',
-    credentials: true,
-  }),
-);
+
 // Middlewares base para entender JSON
 app.use(express.json());
 
@@ -25,7 +16,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Rutas de la API
 app.use('/api/products', productRouter);
-app.use('/api/categories', categoryRouter);
 
 /**
  * @openapi
@@ -51,12 +41,10 @@ app.use('/api/categories', categoryRouter);
  *                   example: API de Joyería KOB funcionando correctamente
  */
 app.get('/', (req: Request, res: Response) => {
-  res.json({
-    success: true,
-    message: 'API de Joyería KOB funcionando correctamente 💎',
-  });
+    res.json({
+        success: true,
+        message: 'API de Joyería KOB funcionando correctamente 💎',
+    });
 });
 
-app.use(errorHandler);
-app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
 export default app;
