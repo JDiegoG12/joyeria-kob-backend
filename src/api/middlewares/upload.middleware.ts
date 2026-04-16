@@ -14,4 +14,4 @@ export const uploadJewelImages = multer({
         new Error('Solo se permiten archivos de imagen (jpg, jpeg, png, webp)'),
       );
   },
-}).array('imageFiles', 4); // Esperamos un campo 'imageFiles' con hasta 4 archivos
+}).array('imageFiles', 5); // Esperamos un campo 'imageFiles' con hasta 5 archivos
