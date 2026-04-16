@@ -10,8 +10,17 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
     "rootDir": ".",
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "typeRoots": ["./node_modules/@types", "./src/shared/types"]
   },
-  "include": ["src", "prisma", "jest.config.js"],
+  "ts-node": {
+    "files": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "prisma/**/*.ts",
+    "jest.config.js"
+  ],
   "exclude": ["node_modules", "dist"]
 }
