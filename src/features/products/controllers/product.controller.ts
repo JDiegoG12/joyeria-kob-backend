@@ -17,6 +17,7 @@ export const getProducts = async (
       : undefined;
     const result = await productFacade.getProducts(isAdmin, categoryId);
 
+
     res.status(result.status).json({
       success: result.success,
       data: result.data,
