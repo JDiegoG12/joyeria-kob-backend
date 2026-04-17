@@ -57,6 +57,22 @@ const router = Router();
  *         createdAt:
  *           type: string
  *           format: date-time
+ *         category:
+ *           type: object
+ *           description: Información de la categoría y su jerarquía (Padre).
+ *           properties:
+ *             id: { type: integer, example: 2 }
+ *             name: { type: string, example: "Anillos de Compromiso" }
+ *             slug: { type: string, example: "anillos-de-compromiso" }
+ *             parentId: { type: integer, nullable: true, example: 1 }
+ *             parent:
+ *               type: object
+ *               nullable: true
+ *               description: Si es una subcategoría, aquí viene la info del padre.
+ *               properties:
+ *                 id: { type: integer, example: 1 }
+ *                 name: { type: string, example: "Anillos" }
+ *                 slug: { type: string, example: "anillos" }
  *
  *     ProductInput:
  *       type: object
@@ -129,11 +145,15 @@ const router = Router();
  *           example: '{"requiresSize": true, "hasStones": true}'
  *         imagesToDelete:
  *           type: string
- *           description: Arreglo de nombres de imágenes a eliminar, convertido a String JSON.
+ *           description: >
+ *             Arreglo de nombres de imágenes a eliminar, DEBE enviarse como String JSON.
+ *             Ejemplo en frontend: `formData.append('imagesToDelete', JSON.stringify(['uuid-viejo.webp']))`
  *           example: '["d4f6a1-xyz.webp", "a7b8c9-abc.webp"]'
  *         imageFiles:
  *           type: array
- *           description: Archivos nuevos a agregar. Se sumarán a las imágenes existentes. Límite evaluado dinámicamente con las persistentes (máximo 5 en total).
+ *           description: >
+ *             Archivos NUEVOS a agregar. Se sumarán a las imágenes que no fueron borradas.
+ *             La suma de (imágenes existentes - imagesToDelete + imageFiles) NO puede superar 5.
  *           maxItems: 5
  *           items:
  *             type: string
@@ -155,6 +175,12 @@ const router = Router();
  *           type: boolean
  *         description: "Si se establece en true, se mostrarán todas las joyas incluyendo las ocultas."
  *         example: true
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: integer
+ *         description: "Filtra por ID de categoría. Si el ID pertenece a una categoría principal, devolverá automáticamente los productos de sus subcategorías."
+ *         example: 1
  *     responses:
  *       '200':
  *         description: Listado de joyas obtenido correctamente.

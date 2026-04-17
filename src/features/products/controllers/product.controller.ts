@@ -12,7 +12,10 @@ export const getProducts = async (
   try {
     // Si la URL tiene un query ?admin=true, lo interpretamos como que el usuario es admin y le mostramos todo el catálogo, incluyendo los ocultos. Si no, solo mostramos los disponibles.
     const isAdmin = req.query.admin === 'true';
-    const result = await productFacade.getProducts(isAdmin);
+    const categoryId = req.query.categoryId
+      ? Number(req.query.categoryId)
+      : undefined;
+    const result = await productFacade.getProducts(isAdmin, categoryId);
 
     res.status(result.status).json({
       success: result.success,
