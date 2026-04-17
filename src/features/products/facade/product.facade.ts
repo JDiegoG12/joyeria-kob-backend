@@ -19,9 +19,10 @@ type ServiceError = { code?: string; status?: number; message?: string };
 class ProductFacade implements IProductFacade {
   async getProducts(
     isAdmin: boolean,
+    categoryId?: number,
   ): Promise<FacadeResult<ProductWithCategory[]>> {
     try {
-      const products = await getAllProductsService(isAdmin);
+      const products = await getAllProductsService(isAdmin, categoryId);
       return {
         success: true,
         data: products,

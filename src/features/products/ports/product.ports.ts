@@ -12,7 +12,10 @@ export type FacadeResult<T = unknown> = {
 };
 
 export interface IProductFacade {
-  getProducts(isAdmin: boolean): Promise<FacadeResult<ProductWithCategory[]>>;
+  getProducts(
+    isAdmin: boolean,
+    categoryId?: number,
+  ): Promise<FacadeResult<ProductWithCategory[]>>;
   getProduct(id: string): Promise<FacadeResult<ProductWithCategory>>;
   createProduct(
     data: IProductCreateRaw,

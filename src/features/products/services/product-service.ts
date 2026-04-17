@@ -1,4 +1,5 @@
 import { prisma } from '../../../config/prisma';
+import { Prisma } from '@prisma/client';
 import {
   IProductCreateRaw,
   ICreateProductDTO,
@@ -17,14 +18,44 @@ const UPLOAD_DIR = path.join(process.cwd(), 'public/uploads/products');
  * Recupera el catálogo de productos aplicando filtrado por nivel de acceso.
  *
  * @param isAdmin - Determina si se exponen los productos ocultos o inactivos.
+ * @param categoryId - Opcionalmente filtra por categoría específica. Si es padre, incluye los productos de sus subcategorías.
  * @returns Colección de productos disponibles vinculados a su categoría.
  */
-export const getAllProductsService = async (isAdmin: boolean = false) => {
-  const queryFilter = isAdmin ? {} : { status: 'AVAILABLE' as ProductStatus };
+export const getAllProductsService = async (
+  isAdmin: boolean = false,
+  categoryId?: number,
+) => {
+  let targetCategoryIds: number[] | undefined = undefined;
 
+  if (categoryId) {
+    const categoryTree = await prisma.category.findUnique({
+      where: { id: categoryId },
+      include: { children: true },
+    });
+
+    if (categoryTree) {
+      targetCategoryIds = [
+        categoryTree.id,
+        ...categoryTree.children.map((child) => child.id),
+      ];
+    } else {
+      return []; // Si la categoría no existe, retornamos un array vacío
+    }
+  }
+
+  const queryFilter: Prisma.ProductWhereInput = isAdmin
+    ? {}
+    : { status: 'AVAILABLE' as ProductStatus };
+  if (targetCategoryIds) {
+    queryFilter.categoryId = { in: targetCategoryIds }; // Filtra por el padre Y los hijos
+  }
   return await prisma.product.findMany({
     where: queryFilter,
-    include: { category: true },
+    include: {
+      category: {
+        include: { parent: true },
+      },
+    },
     orderBy: { createdAt: 'desc' },
   });
 };
@@ -38,7 +69,11 @@ export const getAllProductsService = async (isAdmin: boolean = false) => {
 export const getProductByIdService = async (id: string) => {
   return await prisma.product.findUnique({
     where: { id },
-    include: { category: true },
+    include: {
+      category: {
+        include: { parent: true },
+      },
+    },
   });
 };
 
@@ -184,24 +219,26 @@ export const updateProductService = async (
 
   let finalImages = currentProduct.images as string[];
 
-  const imagesToDelete: string[] = rawData.imagesToDelete
-    ? JSON.parse(rawData.imagesToDelete)
-    : [];
+  if (rawData.imagesToDelete) {
+    const imagesToDelete: string[] = JSON.parse(rawData.imagesToDelete);
 
-  if (imagesToDelete.length > 0) {
-    for (const imgName of imagesToDelete) {
-      const targetPath = path.join(UPLOAD_DIR, imgName);
-      await fs
-        .unlink(targetPath)
-        .catch((err) =>
-          console.warn(
-            `[Image Delete Sys Warning] Omitiendo fallido ${imgName}:`,
-            err.message,
-          ),
-        );
+    if (imagesToDelete.length > 0) {
+      for (const imgName of imagesToDelete) {
+        // Solo intentamos borrar si la imagen realmente pertenecía a este producto
+        if (finalImages.includes(imgName)) {
+          const targetPath = path.join(UPLOAD_DIR, imgName);
+          await fs
+            .unlink(targetPath)
+            .catch((err) =>
+              console.warn(
+                `[Image Delete Sys Warning] Omitiendo fallido ${imgName}:`,
+                err.message,
+              ),
+            );
+        }
+      }
+      finalImages = finalImages.filter((img) => !imagesToDelete.includes(img));
     }
-
-    finalImages = finalImages.filter((img) => !imagesToDelete.includes(img));
   }
 
   if (files && files.length > 0) {
