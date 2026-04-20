@@ -3,43 +3,12 @@ import { IGoldPriceFacade } from '../ports/gold-price.ports';
 import {
   GoldPriceResponseDTO,
   UpdateGoldPriceDTO,
-} from '../dtos/gold-price.dto';
+} from '../../../shared/dtos/gold-price.dto';
 import { FacadeResult } from '../../../shared/types/facade';
-import * as goldPriceService from '../services/gold-price.service';
+import * as systemService from '../../system/services/system.service';
 import { ERROR_CODES } from '../../../shared/constants/error-codes';
 
 export class GoldPriceFacade implements IGoldPriceFacade {
-  async getCurrentGoldPrice(): Promise<FacadeResult<GoldPriceResponseDTO>> {
-    try {
-      const settings = await goldPriceService.getGoldPriceSetting();
-
-      if (!settings) {
-        return {
-          success: false,
-          error: ERROR_CODES.INTERNAL_ERROR,
-          message:
-            'La configuración del precio del oro no ha sido inicializada.',
-          statusCode: 500,
-        };
-      }
-
-      const responseDTO = new GoldPriceResponseDTO(settings);
-      return {
-        success: true,
-        data: responseDTO,
-        message: 'Precio del oro obtenido correctamente.',
-      };
-    } catch (error) {
-      console.error('Error in getCurrentGoldPrice facade:', error);
-      return {
-        success: false,
-        error: ERROR_CODES.INTERNAL_ERROR,
-        message: 'Ocurrió un error al obtener el precio del oro.',
-        statusCode: 500,
-      };
-    }
-  }
-
   async updateGoldPrice(
     data: UpdateGoldPriceDTO,
   ): Promise<FacadeResult<GoldPriceResponseDTO>> {
@@ -61,7 +30,7 @@ export class GoldPriceFacade implements IGoldPriceFacade {
     try {
       const decimalPrice = new Prisma.Decimal(goldPricePerGram);
       const updatedSettings =
-        await goldPriceService.upsertGoldPriceSetting(decimalPrice);
+        await systemService.upsertGoldPriceSetting(decimalPrice);
 
       const responseDTO = new GoldPriceResponseDTO(updatedSettings);
       return {

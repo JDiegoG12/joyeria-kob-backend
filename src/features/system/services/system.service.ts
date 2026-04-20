@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../../config/prisma';
-import { SystemSetting } from '../models/gold-price.model';
+import { SystemSetting } from '../../../shared/models/system.model';
 
 const SETTING_ID = 1;
 

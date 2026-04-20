@@ -1,15 +1,13 @@
 import { Request, Response } from 'express';
-import { GoldPriceFacade } from '../facade/gold-price.facade';
-import { UpdateGoldPriceDTO } from '../../../shared/dtos/gold-price.dto';
+import { SystemFacade } from '../facade/system.facade';
 
-const goldPriceFacade = new GoldPriceFacade();
+const systemFacade = new SystemFacade();
 
-export const updateGoldPriceController = async (
+export const getCurrentGoldPriceController = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
-  const updateData: UpdateGoldPriceDTO = req.body;
-  const result = await goldPriceFacade.updateGoldPrice(updateData);
+  const result = await systemFacade.getCurrentGoldPrice();
 
   if (!result.success) {
     return res.status(result.statusCode).json({
