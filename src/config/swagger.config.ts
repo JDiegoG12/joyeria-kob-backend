@@ -70,6 +70,25 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
+        InternalServerError: {
+          description: 'Ocurrió un error inesperado en el servidor.',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: false },
+                  error: { type: 'string', example: 'INTERNAL_ERROR' },
+                  message: {
+                    type: 'string',
+                    example:
+                      'Ocurrió un error inesperado. Por favor, intente de nuevo más tarde.',
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     },
   },
