@@ -1,7 +1,12 @@
 import { Product, Category } from '@prisma/client';
 import { IProductCreateRaw, IProductUpdateRaw } from '../models/product-types';
 
-export type ProductWithCategory = Product & { category: Category };
+export type ProductoWithPrice = Omit<Product, 'calculatedPrice'> & {
+  calculatedPrice: number;
+};
+export type ProductWithCategoryAndPrice = ProductoWithPrice & {
+  category: Category;
+};
 
 export type FacadeResult<T = unknown> = {
   success: boolean;
@@ -15,16 +20,16 @@ export interface IProductFacade {
   getProducts(
     isAdmin: boolean,
     categoryId?: number,
-  ): Promise<FacadeResult<ProductWithCategory[]>>;
-  getProduct(id: string): Promise<FacadeResult<ProductWithCategory>>;
+  ): Promise<FacadeResult<ProductWithCategoryAndPrice[]>>;
+  getProduct(id: string): Promise<FacadeResult<ProductWithCategoryAndPrice>>;
   createProduct(
     data: IProductCreateRaw,
     files: Express.Multer.File[] | undefined,
-  ): Promise<FacadeResult<Product>>;
+  ): Promise<FacadeResult<ProductoWithPrice>>;
   deleteProduct(id: string): Promise<FacadeResult<boolean>>;
   updateProduct(
     id: string,
     data: IProductUpdateRaw,
     files: Express.Multer.File[] | undefined,
-  ): Promise<FacadeResult<Product>>;
+  ): Promise<FacadeResult<ProductoWithPrice>>;
 }

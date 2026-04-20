@@ -49,15 +49,25 @@ export const getAllProductsService = async (
   if (targetCategoryIds) {
     queryFilter.categoryId = { in: targetCategoryIds }; // Filtra por el padre Y los hijos
   }
-  return await prisma.product.findMany({
+
+  // Buscamos productos
+  const products = await prisma.product.findMany({
     where: queryFilter,
-    include: {
-      category: {
-        include: { parent: true },
-      },
-    },
+    include: { category: { include: { parent: true } } },
     orderBy: { createdAt: 'desc' },
   });
+
+  const settings = await prisma.systemSetting.findUnique({ where: { id: 1 } });
+  const goldPrice = settings?.goldPricePerGram.toNumber() || 350000;
+
+  return products.map((product) => ({
+    ...product,
+    calculatedPrice: calculateSuggestedPrice(
+      product.baseWeight.toNumber(),
+      goldPrice,
+      product.additionalValue.toNumber(),
+    ),
+  }));
 };
 
 /**
@@ -67,14 +77,24 @@ export const getAllProductsService = async (
  * @returns El producto encontrado junto a su información de categoría, o null si no existe.
  */
 export const getProductByIdService = async (id: string) => {
-  return await prisma.product.findUnique({
+  const product = await prisma.product.findUnique({
     where: { id },
-    include: {
-      category: {
-        include: { parent: true },
-      },
-    },
+    include: { category: { include: { parent: true } } },
   });
+
+  if (!product) return null;
+
+  const settings = await prisma.systemSetting.findUnique({ where: { id: 1 } });
+  const goldPrice = settings?.goldPricePerGram.toNumber() || 350000;
+
+  return {
+    ...product,
+    calculatedPrice: calculateSuggestedPrice(
+      product.baseWeight.toNumber(),
+      goldPrice,
+      product.additionalValue.toNumber(),
+    ),
+  };
 };
 
 /**
@@ -125,7 +145,7 @@ export const createProductService = async (
 
   const initialStatus = validatedData.stock > 0 ? 'AVAILABLE' : 'OUT_OF_STOCK';
 
-  return await prisma.product.create({
+  const newProduct = await prisma.product.create({
     data: {
       categoryId: validatedData.categoryId,
       name: validatedData.name,
@@ -134,11 +154,15 @@ export const createProductService = async (
       additionalValue: validatedData.additionalValue,
       stock: validatedData.stock,
       status: initialStatus,
-      calculatedPrice: calculatedPrice,
       specifications: validatedData.specifications as object,
       images: imageNames,
     },
   });
+
+  return {
+    ...newProduct,
+    calculatedPrice,
+  };
 };
 
 /**
@@ -279,14 +303,18 @@ export const updateProductService = async (
     reactiveStatus = 'AVAILABLE';
   }
 
-  return await prisma.product.update({
+  const updatedProduct = await prisma.product.update({
     where: { id },
     data: {
       ...cleanData,
       status: reactiveStatus,
-      calculatedPrice: recalibratedPricing,
       images: finalImages,
       specifications: cleanData.specifications as object | undefined,
     },
   });
+
+  return {
+    ...updatedProduct,
+    calculatedPrice: recalibratedPricing,
+  };
 };

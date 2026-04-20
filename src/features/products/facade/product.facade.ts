@@ -1,8 +1,8 @@
-import { Product } from '@prisma/client';
 import {
   IProductFacade,
   FacadeResult,
-  ProductWithCategory,
+  ProductWithCategoryAndPrice,
+  ProductoWithPrice,
 } from '../ports/product.ports';
 import {
   getAllProductsService,
@@ -20,7 +20,7 @@ class ProductFacade implements IProductFacade {
   async getProducts(
     isAdmin: boolean,
     categoryId?: number,
-  ): Promise<FacadeResult<ProductWithCategory[]>> {
+  ): Promise<FacadeResult<ProductWithCategoryAndPrice[]>> {
     try {
       const products = await getAllProductsService(isAdmin, categoryId);
       return {
@@ -40,7 +40,9 @@ class ProductFacade implements IProductFacade {
     }
   }
 
-  async getProduct(id: string): Promise<FacadeResult<ProductWithCategory>> {
+  async getProduct(
+    id: string,
+  ): Promise<FacadeResult<ProductWithCategoryAndPrice>> {
     try {
       const product = await getProductByIdService(id);
       if (!product) {
@@ -71,7 +73,7 @@ class ProductFacade implements IProductFacade {
   async createProduct(
     data: IProductCreateRaw,
     files: Express.Multer.File[] | undefined,
-  ): Promise<FacadeResult<Product>> {
+  ): Promise<FacadeResult<ProductoWithPrice>> {
     if (!files || files.length === 0) {
       return {
         success: false,
@@ -141,7 +143,7 @@ class ProductFacade implements IProductFacade {
     id: string,
     data: IProductUpdateRaw,
     files: Express.Multer.File[] | undefined,
-  ): Promise<FacadeResult<Product>> {
+  ): Promise<FacadeResult<ProductoWithPrice>> {
     try {
       const updatedProduct = await updateProductService(id, data, files);
       return {
