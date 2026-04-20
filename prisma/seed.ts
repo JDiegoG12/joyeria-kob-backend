@@ -3,16 +3,6 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-// Función para calcular el precio sugerido, replicando la lógica de negocio
-const calculateSuggestedPrice = (
-  weight: number,
-  goldPrice: number,
-  additionalValue: number,
-): number => {
-  const total = weight * goldPrice + additionalValue;
-  return Math.round(total);
-};
-
 async function seedUsers() {
   console.log('Iniciando la siembra de usuarios...');
 
@@ -47,7 +37,7 @@ async function main() {
   await seedUsers();
 
   // 1. Sembrar Configuración del Sistema (Precio del Oro)
-  const systemSettings = await prisma.systemSetting.upsert({
+  await prisma.systemSetting.upsert({
     where: { id: 1 },
     update: {
       goldPricePerGram: 350000,
@@ -191,12 +181,6 @@ async function main() {
         return null;
       }
 
-      const calculatedPrice = calculateSuggestedPrice(
-        p.baseWeight,
-        systemSettings.goldPricePerGram.toNumber(),
-        p.additionalValue,
-      );
-
       return {
         name: p.name,
         description: p.description,
@@ -207,7 +191,6 @@ async function main() {
         specifications: p.specifications,
         images: p.images,
         categoryId: categoryId,
-        calculatedPrice: calculatedPrice,
       };
     })
     .filter((p) => p !== null) as any[];
