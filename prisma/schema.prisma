@@ -64,7 +64,6 @@ model Product {
   additionalValue Decimal       @db.Decimal(10, 2) @default(0) @map("additional_value")
   stock           Int           @default(1)
   status          ProductStatus @default(AVAILABLE)
-  calculatedPrice Decimal       @db.Decimal(10, 2) @map("calculated_price")
   
   // Columnas flexibles nativas de MySQL JSON
   specifications  Json          
