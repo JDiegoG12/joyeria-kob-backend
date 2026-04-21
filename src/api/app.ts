@@ -32,6 +32,7 @@ app.use('/api/categories', categoryRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/system', systemRouter);
+app.use('/api/users', authRouter);
 
 /**
  * @openapi

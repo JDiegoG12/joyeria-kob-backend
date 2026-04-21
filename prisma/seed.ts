@@ -9,8 +9,10 @@ async function seedUsers() {
   const adminPassword = await bcrypt.hash('Admin123!', 10);
   await prisma.user.upsert({
     where: { email: 'admin@kob.com' },
-    update: { password: adminPassword },
+    update: { password: adminPassword, name: 'Admin', lastName: 'KOB' },
     create: {
+      name: 'Admin',
+      lastName: 'KOB',
       email: 'admin@kob.com',
       password: adminPassword,
       role: UserRole.ADMIN,
@@ -20,8 +22,10 @@ async function seedUsers() {
   const clientPassword = await bcrypt.hash('Cliente123!', 10);
   await prisma.user.upsert({
     where: { email: 'cliente@test.com' },
-    update: { password: clientPassword },
+    update: { password: clientPassword, name: 'Cliente', lastName: 'Prueba' },
     create: {
+      name: 'Cliente',
+      lastName: 'Prueba',
       email: 'cliente@test.com',
       password: clientPassword,
       role: UserRole.CLIENT,

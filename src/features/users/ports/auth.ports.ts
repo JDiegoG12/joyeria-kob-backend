@@ -4,7 +4,7 @@ import {
   LoginRequestDTO,
   RegisterRequestDTO,
 } from '../dtos/auth.dto';
-import { User } from '../models/user.model';
+import { User } from '@prisma/client';
 
 export interface IAuthFacade {
   register(data: RegisterRequestDTO): Promise<FacadeResult<User>>;

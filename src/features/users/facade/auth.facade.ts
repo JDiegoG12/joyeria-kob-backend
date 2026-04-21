@@ -8,7 +8,7 @@ import {
 } from '../dtos/auth.dto';
 import * as userService from '../services/user.service';
 import { FacadeResult } from '../../../shared/types/facade';
-import { User } from '../models/user.model';
+import { User } from '@prisma/client';
 import { ERROR_CODES } from '../../../shared/constants/error-codes';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-for-dev';
@@ -21,16 +21,7 @@ export class AuthFacade implements IAuthFacade {
    * @returns El usuario creado o un error.
    */
   async register(data: RegisterRequestDTO): Promise<FacadeResult<User>> {
-    const { email, password } = data;
-
-    if (!email || !password) {
-      return {
-        success: false,
-        error: ERROR_CODES.VALIDATION_ERROR,
-        message: 'Email y contraseña son requeridos.',
-        statusCode: 400,
-      };
-    }
+    const { name, lastName, email, password, phone } = data;
 
     const existingUser = await userService.findUserByEmail(email);
     if (existingUser) {
@@ -45,8 +36,11 @@ export class AuthFacade implements IAuthFacade {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
     const newUser = await userService.createUser({
+      name,
+      lastName,
       email,
       password: hashedPassword,
+      phone,
     });
 
     return {
@@ -64,21 +58,12 @@ export class AuthFacade implements IAuthFacade {
   async login(data: LoginRequestDTO): Promise<FacadeResult<AuthResponseDTO>> {
     const { email, password } = data;
 
-    if (!email || !password) {
-      return {
-        success: false,
-        error: ERROR_CODES.VALIDATION_ERROR,
-        message: 'Email y contraseña son requeridos.',
-        statusCode: 400,
-      };
-    }
-
     const user = await userService.findUserByEmail(email);
     if (!user) {
       return {
         success: false,
-        error: ERROR_CODES.UNAUTHORIZED,
-        message: 'Credenciales inválidas.',
+        error: ERROR_CODES.USER_NOT_FOUND,
+        message: 'El usuario no existe o las credenciales son inválidas.',
         statusCode: 401,
       };
     }
@@ -87,8 +72,8 @@ export class AuthFacade implements IAuthFacade {
     if (!isPasswordValid) {
       return {
         success: false,
-        error: ERROR_CODES.UNAUTHORIZED,
-        message: 'Credenciales inválidas.',
+        error: ERROR_CODES.INVALID_PASSWORD,
+        message: 'El usuario no existe o las credenciales son inválidas.',
         statusCode: 401,
       };
     }

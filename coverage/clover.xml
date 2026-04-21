@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1775947307473" clover="3.2.0">
-  <project timestamp="1775947307473" name="All files">
+<coverage generated="1776748060382" clover="3.2.0">
+  <project timestamp="1776748060382" name="All files">
     <metrics statements="124" coveredstatements="124" conditionals="15" coveredconditionals="15" methods="8" coveredmethods="8" elements="147" coveredelements="147" complexity="0" loc="124" ncloc="124" packages="1" files="1" classes="1"/>
     <file name="category.service.ts" path="D:\Universidad__del_Cauca\8vo Semestre\Proyecto I\Joyeria KOB\joyeria-kob-backend\src\features\categories\services\category.service.ts">
       <metrics statements="124" coveredstatements="124" conditionals="15" coveredconditionals="15" methods="8" coveredmethods="8"/>

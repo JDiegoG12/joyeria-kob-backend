@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { updateGoldPriceController } from './controllers/gold-price.controller';
-import { authMiddleware } from '../../api/middlewares/auth.middleware';
-import { requireAdmin } from '../../api/middlewares/require-admin.middleware';
+import {
+  authenticateToken,
+  requireAdmin,
+} from '../../api/middlewares/auth.middleware';
 
 const router = Router();
 
@@ -39,7 +41,7 @@ const router = Router();
  */
 router.put(
   '/gold-price',
-  authMiddleware,
+  authenticateToken,
   requireAdmin,
   updateGoldPriceController,
 );

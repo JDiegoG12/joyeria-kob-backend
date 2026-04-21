@@ -1,54 +1,90 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload, VerifyErrors } from 'jsonwebtoken';
 import { UserRole } from '@prisma/client';
 import { ERROR_CODES } from '../../shared/constants/error-codes';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-for-dev';
 
-interface JwtPayload {
+// Define una interfaz específica para el payload de nuestro token, extendiendo la de la librería.
+interface TokenPayload extends JwtPayload {
   id: string;
   role: UserRole;
 }
 
+// Extiende la interfaz Request de Express para incluir el payload del usuario decodificado.
+export interface AuthenticatedRequest extends Request {
+  user?: TokenPayload;
+}
+
 /**
- * Middleware para autenticar usuarios vía JWT.
- * Verifica el token del header `Authorization` y adjunta el payload del usuario a la petición.
- *
- * @param req El objeto Request de Express.
- * @param res El objeto Response de Express.
- * @param next La siguiente función de middleware.
+ * Middleware de autenticación: verifica la validez de un token JWT.
+ * Extrae el token del encabezado 'Authorization: Bearer <token>'.
+ * Si el token es válido, decodifica el payload (id, role) y lo adjunta a `req.user`.
+ * Si el token no existe o es inválido, responde con un error 401 o 403.
  */
-export const authMiddleware = (
-  req: Request,
+export const authenticateToken = (
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction,
 ) => {
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!token) {
     return res.status(401).json({
       success: false,
       error: ERROR_CODES.UNAUTHORIZED,
-      message: 'No se proveyó un token o el formato es incorrecto.',
+      message: 'Acceso denegado. No se proporcionó un token.',
     });
   }
 
-  const token = authHeader.split(' ')[1];
+  jwt.verify(
+    token,
+    JWT_SECRET,
+    (err: VerifyErrors | null, decoded?: JwtPayload | string) => {
+      if (err) {
+        return res.status(403).json({
+          success: false,
+          error: ERROR_CODES.FORBIDDEN,
+          message: 'El token es inválido o ha expirado.',
+        });
+      }
 
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    req.user = { id: decoded.id, role: decoded.role };
-    next();
-  } catch (error: unknown) {
-    // Opcional: loguear el error para depuración en el servidor
-    if (error instanceof Error) {
-      console.error('Error de verificación JWT:', error.message);
-    }
-
-    return res.status(401).json({
-      success: false,
-      error: ERROR_CODES.UNAUTHORIZED,
-      message: 'Token inválido o expirado.',
-    });
-  }
+      // Guarda de tipo para asegurar que el payload decodificado tiene la estructura que esperamos.
+      if (typeof decoded === 'object' && decoded && 'id' in decoded) {
+        req.user = decoded as TokenPayload;
+        next();
+      } else {
+        return res.status(403).json({
+          success: false,
+          error: ERROR_CODES.FORBIDDEN,
+          message: 'El formato del token es incorrecto.',
+        });
+      }
+    },
+  );
 };
+
+/**
+ * Middleware de autorización: verifica si el usuario autenticado tiene un rol específico.
+ * Debe usarse siempre DESPUÉS del middleware `authenticateToken`.
+ * @param requiredRole El rol que se requiere para acceder a la ruta.
+ */
+export const authorizeRole = (requiredRole: UserRole) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    if (!req.user || req.user.role !== requiredRole) {
+      return res.status(403).json({
+        success: false,
+        error: ERROR_CODES.FORBIDDEN,
+        message: 'No tienes los permisos necesarios para realizar esta acción.',
+      });
+    }
+    next();
+  };
+};
+
+// Exporta un middleware específico para requerir rol de administrador
+export const requireAdmin = authorizeRole(UserRole.ADMIN);
+
+// Exporta un middleware específico para requerir rol de cliente
+export const requireClient = authorizeRole(UserRole.CLIENT);

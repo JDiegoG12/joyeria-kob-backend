@@ -1,5 +1,9 @@
 import { Router } from 'express';
 import {
+  authenticateToken,
+  requireAdmin,
+} from '../../api/middlewares/auth.middleware';
+import {
   getAllCategoriesController,
   getCategoryByIdController,
   getCategoryChildrenController,
@@ -223,8 +227,10 @@ router.get('/:id/children', getCategoryChildrenController);
  *   put:
  *     tags:
  *       - Categorías
- *     summary: Actualizar una categoría existente
+ *     summary: '[ADMIN] Actualizar una categoría existente'
  *     description: Modifica los datos de una categoría ya creada. El slug se actualiza automáticamente si cambia el nombre.
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -303,8 +309,12 @@ router.get('/:id/children', getCategoryChildrenController);
  *                 message:
  *                   type: string
  *                   example: "El nombre de categoría 'Anillos de Compromiso' ya existe."
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
  */
-router.put('/:id', updateCategoryController);
+router.put('/:id', authenticateToken, requireAdmin, updateCategoryController);
 
 /**
  * @openapi
@@ -312,8 +322,10 @@ router.put('/:id', updateCategoryController);
  *   post:
  *     tags:
  *       - Categorías
- *     summary: Crear una nueva categoría
+ *     summary: '[ADMIN] Crear una nueva categoría'
  *     description: Agrega una nueva categoría al catálogo de joyas. El slug se genera automáticamente a partir del nombre.
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -368,8 +380,12 @@ router.put('/:id', updateCategoryController);
  *                 message:
  *                   type: string
  *                   example: "El nombre de categoría 'Collares' ya existe en este nivel."
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
  */
-router.post('/', postCategoryController);
+router.post('/', authenticateToken, requireAdmin, postCategoryController);
 
 /**
  * @openapi
@@ -377,8 +393,10 @@ router.post('/', postCategoryController);
  *   delete:
  *     tags:
  *       - Categorías
- *     summary: Eliminar una categoría
+ *     summary: '[ADMIN] Eliminar una categoría'
  *     description: Elimina permanentemente una categoría del catálogo por su ID.
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -440,7 +458,16 @@ router.post('/', postCategoryController);
  *                 message:
  *                   type: string
  *                   example: "No se puede eliminar la categoría porque tiene subcategorías asociadas."
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
  */
-router.delete('/:id', removeCategoryController);
+router.delete(
+  '/:id',
+  authenticateToken,
+  requireAdmin,
+  removeCategoryController,
+);
 
 export default router;
