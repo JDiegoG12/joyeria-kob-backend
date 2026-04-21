@@ -3,7 +3,7 @@
  * Usados en facades y middlewares para consistencia.
  */
 export const ERROR_CODES = {
-  // Errores generales
+  // General
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   INVALID_ID: 'INVALID_ID',
   MISSING_FIELDS: 'MISSING_FIELDS',
@@ -25,6 +25,8 @@ export const ERROR_CODES = {
   UNAUTHORIZED: 'UNAUTHORIZED',
   FORBIDDEN: 'FORBIDDEN',
   EMAIL_ALREADY_EXISTS: 'EMAIL_ALREADY_EXISTS',
+  INVALID_PASSWORD: 'INVALID_PASSWORD',
+  USER_NOT_FOUND: 'USER_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];

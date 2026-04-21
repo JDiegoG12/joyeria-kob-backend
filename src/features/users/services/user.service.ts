@@ -1,6 +1,6 @@
 import { prisma } from '../../../config/prisma';
-import { RegisterRequestDTO } from '../dtos/auth.dto';
-import { User } from '../models/user.model';
+import { Prisma } from '@prisma/client';
+import { User } from '@prisma/client';
 
 /**
  * Busca un usuario por su dirección de email.
@@ -15,11 +15,11 @@ export const findUserByEmail = async (email: string): Promise<User | null> => {
 
 /**
  * Crea un nuevo usuario en la base de datos.
- * @param userData - Los datos del usuario para el registro.
+ * @param userData - Los datos del usuario para el registro, con la contraseña ya hasheada.
  * @returns El usuario recién creado.
  */
 export const createUser = async (
-  userData: RegisterRequestDTO,
+  userData: Prisma.UserCreateInput,
 ): Promise<User> => {
   return prisma.user.create({
     data: userData,

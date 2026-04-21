@@ -1,16 +1,22 @@
-import { User, UserRole } from '../models/user.model';
+import { User, UserRole } from '@prisma/client';
 
 /**
  * DTO para los datos públicos del usuario, excluyendo la contraseña.
  */
 export class UserResponseDTO {
   id: string;
+  name: string;
+  lastName: string;
+  phone: string | null;
   email: string;
   role: UserRole;
   createdAt: Date;
 
   constructor(user: User) {
     this.id = user.id;
+    this.name = user.name;
+    this.lastName = user.lastName;
+    this.phone = user.phone ?? null;
     this.email = user.email;
     this.role = user.role;
     this.createdAt = user.createdAt;
@@ -30,5 +36,11 @@ export class AuthResponseDTO {
   }
 }
 
-export type RegisterRequestDTO = Pick<User, 'email' | 'password'>;
+export interface RegisterRequestDTO {
+  name: string;
+  lastName: string;
+  email: string;
+  password: string;
+  phone?: string;
+}
 export type LoginRequestDTO = Pick<User, 'email' | 'password'>;

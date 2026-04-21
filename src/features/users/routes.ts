@@ -1,5 +1,9 @@
 import { Router } from 'express';
 import { register, login } from './controllers/auth.controller';
+import {
+  registerValidator,
+  loginValidator,
+} from '../../api/middlewares/auth.validator';
 
 const router = Router();
 
@@ -18,9 +22,23 @@ const router = Router();
  *           schema:
  *             type: object
  *             required:
+ *               - name
+ *               - lastName
  *               - email
  *               - password
  *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Nombre del cliente.
+ *                 example: 'Juan'
+ *               lastName:
+ *                 type: string
+ *                 description: Apellido del cliente.
+ *                 example: 'Pérez'
+ *               phone:
+ *                 type: string
+ *                 description: Teléfono de contacto del cliente (opcional).
+ *                 example: '3101234567'
  *               email:
  *                 type: string
  *                 format: email
@@ -28,6 +46,7 @@ const router = Router();
  *               password:
  *                 type: string
  *                 format: password
+ *                 description: 'Debe tener entre 6 y 50 caracteres.'
  *                 example: 'Cliente123!'
  *     responses:
  *       201:
@@ -37,11 +56,11 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/SuccessUserResponse'
  *       400:
- *         description: Error de validación (ej. campos faltantes).
+ *         description: Error de validación (ej. campos faltantes, contraseña inválida).
  *       409:
  *         description: El email ya está en uso.
  */
-router.post('/register', register);
+router.post('/register', registerValidator, register);
 
 /**
  * @openapi
@@ -79,7 +98,7 @@ router.post('/register', register);
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */
-router.post('/login', login);
+router.post('/login', loginValidator, login);
 
 /**
  * @openapi
@@ -92,6 +111,15 @@ router.post('/login', login);
  *           type: string
  *           format: uuid
  *           example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef'
+ *         name:
+ *           type: string
+ *           example: 'Juan'
+ *         lastName:
+ *           type: string
+ *           example: 'Pérez'
+ *         phone:
+ *           type: string
+ *           example: '3101234567'
  *         email:
  *           type: string
  *           format: email
