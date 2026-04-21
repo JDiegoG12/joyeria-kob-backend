@@ -1,16 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload, VerifyErrors } from 'jsonwebtoken';
 import { UserRole } from '@prisma/client';
 import { ERROR_CODES } from '../../shared/constants/error-codes';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-for-dev';
 
+// Define una interfaz específica para el payload de nuestro token, extendiendo la de la librería.
+interface TokenPayload extends JwtPayload {
+  id: string;
+  role: UserRole;
+}
+
 // Extiende la interfaz Request de Express para incluir el payload del usuario decodificado.
 export interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    role: UserRole;
-  };
+  user?: TokenPayload;
 }
 
 /**
@@ -35,17 +38,31 @@ export const authenticateToken = (
     });
   }
 
-  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
-    if (err) {
-      return res.status(403).json({
-        success: false,
-        error: ERROR_CODES.FORBIDDEN,
-        message: 'El token es inválido o ha expirado.',
-      });
-    }
-    req.user = user as { id: string; role: UserRole };
-    next();
-  });
+  jwt.verify(
+    token,
+    JWT_SECRET,
+    (err: VerifyErrors | null, decoded?: JwtPayload | string) => {
+      if (err) {
+        return res.status(403).json({
+          success: false,
+          error: ERROR_CODES.FORBIDDEN,
+          message: 'El token es inválido o ha expirado.',
+        });
+      }
+
+      // Guarda de tipo para asegurar que el payload decodificado tiene la estructura que esperamos.
+      if (typeof decoded === 'object' && decoded && 'id' in decoded) {
+        req.user = decoded as TokenPayload;
+        next();
+      } else {
+        return res.status(403).json({
+          success: false,
+          error: ERROR_CODES.FORBIDDEN,
+          message: 'El formato del token es incorrecto.',
+        });
+      }
+    },
+  );
 };
 
 /**
