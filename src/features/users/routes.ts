@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import { register, login } from './controllers/auth.controller';
+import { updateProfileController } from './controllers/user.controller';
 import {
   registerValidator,
   loginValidator,
-} from '../../api/middlewares/auth.validator';
+} from '../../api//middlewares/auth.validator';
+import { updateProfileValidator } from '../../api//middlewares/user.validator';
+import { authenticateToken } from '../../api/middlewares/auth.middleware';
 
 const router = Router();
 
@@ -99,6 +102,67 @@ router.post('/register', registerValidator, register);
  *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/login', loginValidator, login);
+
+/**
+ * @openapi
+ * /api/users/me:
+ *   put:
+ *     tags:
+ *       - Usuarios
+ *     summary: Actualizar el perfil del usuario autenticado
+ *     description: Permite al usuario actualmente logueado actualizar sus datos personales, incluyendo su contraseña. Todos los campos son opcionales.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: 'Juanito'
+ *               lastName:
+ *                 type: string
+ *                 example: 'Pérez G'
+ *               phone:
+ *                 type: string
+ *                 example: '3119876543'
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: 'juan.perez@newemail.com'
+ *               currentPassword:
+ *                 type: string
+ *                 format: password
+ *                 description: 'Requerido solo si se va a cambiar la contraseña.'
+ *                 example: 'Cliente123!'
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 description: 'La nueva contraseña. Debe tener entre 6 y 50 caracteres.'
+ *                 example: 'NuevaClaveSegura456!'
+ *     responses:
+ *       200:
+ *         description: Perfil actualizado correctamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessUserResponse'
+ *       400:
+ *         description: Error de validación o contraseña actual incorrecta.
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       409:
+ *         description: El email ya está en uso por otro usuario.
+ */
+router.put(
+  '/me',
+  authenticateToken,
+  updateProfileValidator,
+  updateProfileController,
+);
 
 /**
  * @openapi

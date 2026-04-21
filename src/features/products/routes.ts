@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { uploadJewelImages } from '../../api/middlewares/upload.middleware';
 import {
+  authenticateToken,
+  requireAdmin,
+} from '../../api/middlewares/auth.middleware';
+import {
   getProducts,
   getProduct,
   postProduct,
@@ -251,8 +255,10 @@ router.get('/:id', getProduct);
  *   post:
  *     tags:
  *       - Productos
- *     summary: Crear una nueva joya con imágenes
+ *     summary: '[ADMIN] Crear una nueva joya con imágenes'
  *     description: Agrega una nueva joya cargando archivos reales y calculando el precio automáticamente.
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -308,7 +314,13 @@ router.get('/:id', getProduct);
  *       500:
  *         description: Error interno del servidor o problemas de configuración del precio del oro.
  */
-router.post('/', uploadJewelImages, postProduct);
+router.post(
+  '/',
+  authenticateToken,
+  requireAdmin,
+  uploadJewelImages,
+  postProduct,
+);
 
 /**
  * @openapi
@@ -316,8 +328,10 @@ router.post('/', uploadJewelImages, postProduct);
  *   delete:
  *     tags:
  *       - Productos
- *     summary: Eliminar una joya
+ *     summary: '[ADMIN] Eliminar una joya'
  *     description: Elimina permanentemente una joya del catálogo por su UUID.
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -346,7 +360,7 @@ router.post('/', uploadJewelImages, postProduct);
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.delete('/:id', removeProduct);
+router.delete('/:id', authenticateToken, requireAdmin, removeProduct);
 
 /**
  * @openapi
@@ -354,8 +368,10 @@ router.delete('/:id', removeProduct);
  *   put:
  *     tags:
  *       - Productos
- *     summary: Actualizar una joya existente
+ *     summary: '[ADMIN] Actualizar una joya existente'
  *     description: Permite modificar cualquier campo de la joya. Si se envían imágenes, las anteriores se borrarán físicamente del servidor. El precio se recalcula automáticamente si cambian los valores base.
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -391,6 +407,12 @@ router.delete('/:id', removeProduct);
  *       500:
  *         description: Error interno del servidor.
  */
-router.put('/:id', uploadJewelImages, putProduct);
+router.put(
+  '/:id',
+  authenticateToken,
+  requireAdmin,
+  uploadJewelImages,
+  putProduct,
+);
 
 export default router;

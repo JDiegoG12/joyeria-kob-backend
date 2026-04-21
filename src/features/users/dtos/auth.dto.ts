@@ -43,4 +43,13 @@ export interface RegisterRequestDTO {
   password: string;
   phone?: string;
 }
+
+export interface UpdateProfileRequestDTO {
+  name?: string;
+  lastName?: string;
+  phone?: string;
+  email?: string;
+  currentPassword?: string;
+  newPassword?: string;
+}
 export type LoginRequestDTO = Pick<User, 'email' | 'password'>;
