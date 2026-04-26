@@ -1,5 +1,10 @@
 import { Router } from 'express';
 import { getCurrentGoldPriceController } from './controllers/system.controller';
+import { getGoldPriceHistoryController } from '../admin/controllers/gold-price.controller';
+import {
+  authenticateToken,
+  requireAdmin,
+} from '../../api/middlewares/auth.middleware';
 
 const router = Router();
 
@@ -59,5 +64,11 @@ const router = Router();
  *           example: '2023-10-27T10:00:00.000Z'
  */
 router.get('/gold-price', getCurrentGoldPriceController);
+router.get(
+  '/gold-price/history',
+  authenticateToken,
+  requireAdmin,
+  getGoldPriceHistoryController,
+);
 
 export default router;

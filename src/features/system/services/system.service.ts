@@ -1,6 +1,5 @@
-import { Prisma } from '@prisma/client';
 import { prisma } from '../../../config/prisma';
-import { SystemSetting } from '../../../shared/models/system.model';
+import { Prisma, SystemSetting, GoldPriceHistory } from '@prisma/client';
 
 const SETTING_ID = 1;
 
@@ -22,9 +21,33 @@ export const getGoldPriceSetting = async (): Promise<SystemSetting | null> => {
 export const upsertGoldPriceSetting = async (
   price: Prisma.Decimal,
 ): Promise<SystemSetting> => {
-  return prisma.systemSetting.upsert({
-    where: { id: SETTING_ID },
-    update: { goldPricePerGram: price },
-    create: { id: SETTING_ID, goldPricePerGram: price },
+  return prisma.$transaction(async (tx) => {
+    // 1. Actualizar o crear la configuración global
+    const updatedSetting = await tx.systemSetting.upsert({
+      where: { id: SETTING_ID },
+      update: { goldPricePerGram: price },
+      create: { id: SETTING_ID, goldPricePerGram: price },
+    });
+
+    // 2. Insertar automáticamente en la tabla de historial
+    await tx.goldPriceHistory.create({
+      data: { goldPricePerGram: price },
+    });
+
+    return updatedSetting;
+  });
+};
+
+/**
+ * Obtiene el historial completo de los cambios de precio del oro.
+ * Ideal para el módulo de métricas.
+ *
+ * @returns Un arreglo con el historial ordenado de más reciente a más antiguo.
+ */
+export const getGoldPriceHistoryService = async (): Promise<
+  GoldPriceHistory[]
+> => {
+  return prisma.goldPriceHistory.findMany({
+    orderBy: { createdAt: 'desc' },
   });
 };

@@ -25,3 +25,24 @@ export const updateGoldPriceController = async (
     message: result.message,
   });
 };
+
+export const getGoldPriceHistoryController = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  const result = await goldPriceFacade.getGoldPriceHistory();
+
+  if (!result.success) {
+    return res.status(result.statusCode || 500).json({
+      success: false,
+      error: result.error,
+      message: result.message,
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: result.data,
+    message: result.message,
+  });
+};
