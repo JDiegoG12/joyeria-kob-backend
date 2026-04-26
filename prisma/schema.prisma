@@ -92,6 +92,20 @@ model SystemSetting {
   
   @@map("system_settings")
 }
+
+// Modelo: GoldPriceHistory (Historial inmutable)
+// ------------------------------
+// Almacena cada cambio de precio para métricas y auditoría.
+// ------------------------------
+model GoldPriceHistory {
+  id               Int      @id @default(autoincrement())
+  goldPricePerGram Decimal  @db.Decimal(10, 2) @map("gold_price_per_gram")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt]) // Índice VITAL para ordenar métricas por fecha rápidamente
+  @@map("gold_price_history")
+}
+
 enum UserRole {
   CLIENT
   ADMIN

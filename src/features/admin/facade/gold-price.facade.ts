@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { IGoldPriceFacade } from '../ports/gold-price.ports';
+import { GoldPriceHistoryResponseDTO } from '../dtos/gold-price.dto';
 import {
   GoldPriceResponseDTO,
   UpdateGoldPriceDTO,
@@ -44,6 +45,31 @@ export class GoldPriceFacade implements IGoldPriceFacade {
         success: false,
         error: ERROR_CODES.INTERNAL_ERROR,
         message: 'Ocurrió un error al actualizar el precio del oro.',
+        statusCode: 500,
+      };
+    }
+  }
+  async getGoldPriceHistory(): Promise<
+    FacadeResult<GoldPriceHistoryResponseDTO[]>
+  > {
+    try {
+      const historyRecords = await systemService.getGoldPriceHistoryService();
+
+      const responseDTOs = historyRecords.map(
+        (record) => new GoldPriceHistoryResponseDTO(record),
+      );
+
+      return {
+        success: true,
+        data: responseDTOs,
+        message: 'Historial obtenido correctamente.',
+      };
+    } catch (error) {
+      console.error('Error in getGoldPriceHistory facade:', error);
+      return {
+        success: false,
+        error: ERROR_CODES.INTERNAL_ERROR,
+        message: 'Ocurrió un error al obtener el historial del precio del oro.',
         statusCode: 500,
       };
     }
