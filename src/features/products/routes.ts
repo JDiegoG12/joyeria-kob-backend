@@ -11,6 +11,7 @@ import {
   removeProduct,
   putProduct,
 } from './controllers/product.controller';
+import { getProductStatsController } from './controllers/product-stats.controller';
 
 const router = Router();
 
@@ -208,6 +209,79 @@ const router = Router();
  *                   example: "INTERNAL_ERROR"
  */
 router.get('/', getProducts);
+
+/**
+ * @openapi
+ * /api/products/stats:
+ *   get:
+ *     tags:
+ *       - Productos
+ *     summary: Obtener estadísticas de productos
+ *     description: >
+ *       Devuelve estadísticas sobre la cantidad de productos, con filtros y agrupaciones que dependen del rol del usuario.
+ *       - **Clientes**: Solo pueden ver estadísticas de productos 'AVAILABLE'. No pueden agrupar por estado. Si se proporciona `categoryId`, solo se contarán productos 'AVAILABLE' de esa categoría.
+ *       - **Administradores**: Pueden ver todos los productos, filtrar por estado y agrupar por categoría o estado.
+ *       - Si se proporciona `categoryId`, el parámetro `agrupar` será ignorado y la respuesta será un conteo simple para esa categoría.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: agrupar
+ *         schema:
+ *           type: string
+ *           enum: [categoria, estado]
+ *         description: 'Agrupa los resultados. `estado` solo está permitido para administradores. Este parámetro es ignorado si `categoryId` está presente.'
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: integer
+ *         description: 'ID de la categoría para la cual se desean las estadísticas. Si se proporciona, se devolverá un conteo simple de productos en esa categoría.'
+ *         example: 5
+ *       - in: query
+ *         name: estado
+ *         schema:
+ *           type: string
+ *           enum: [AVAILABLE, OUT_OF_STOCK, HIDDEN]
+ *         description: 'Filtra por un estado específico. Solo para administradores.'
+ *     responses:
+ *       '200':
+ *         description: Estadísticas obtenidas correctamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object # La respuesta principal es un objeto
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Estadísticas obtenidas correctamente."
+ *                 data: # La propiedad 'data' puede ser uno de estos esquemas
+ *                   oneOf:
+ *                     - type: object
+ *                       properties:
+ *                         totalProductos:
+ *                           type: integer
+ *                           example: 150
+ *                         porCategoria:
+ *                           type: object
+ *                           description: 'Presente si se agrupa por `categoria`.'
+ *                           example: { "Anillos": 50, "Collares": 100 }
+ *                         porEstado:
+ *                           type: object
+ *                           description: 'Presente si se agrupa por `estado` (solo admin).'
+ *                           example: { "AVAILABLE": 120, "OUT_OF_STOCK": 30 }
+ *                     - $ref: '#/components/schemas/CategoryStatsResponse' # Cuando se filtra por categoryId
+ *       '400':
+ *         description: Parámetros de consulta inválidos.
+ *       '401':
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       '403':
+ *         description: Acceso denegado (ej. cliente intentando agrupar por estado).
+ *         $ref: '#/components/responses/ForbiddenError'
+ */
+router.get('/stats', authenticateToken, getProductStatsController);
 
 /**
  * @openapi

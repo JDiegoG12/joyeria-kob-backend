@@ -6,7 +6,7 @@ import { ERROR_CODES } from '../../shared/constants/error-codes';
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-for-dev';
 
 // Define una interfaz específica para el payload de nuestro token, extendiendo la de la librería.
-interface TokenPayload extends JwtPayload {
+export interface TokenPayload extends JwtPayload {
   id: string;
   role: UserRole;
 }
