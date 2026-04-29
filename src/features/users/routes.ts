@@ -4,8 +4,8 @@ import { updateProfileController } from './controllers/user.controller';
 import {
   registerValidator,
   loginValidator,
-} from '../../api//middlewares/auth.validator';
-import { updateProfileValidator } from '../../api//middlewares/user.validator';
+} from '../../api/middlewares/auth.validator';
+import { updateProfileValidator } from '../../api/middlewares/user.validator';
 import { authenticateToken } from '../../api/middlewares/auth.middleware';
 
 const router = Router();

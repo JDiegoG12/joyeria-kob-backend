@@ -112,7 +112,7 @@ El servidor quedará corriendo en `http://localhost:4000`.
 | Tecnología         | Versión  | Rol                                          |
 | ------------------ | -------- | -------------------------------------------- |
 | Node.js            | v22.19.0 | Entorno de ejecución                         |
-| TypeScript         | ^6.0.2   | Tipado estático                              |
+| TypeScript         | ^5.9.3   | Tipado estático                              |
 | Express            | ^5.2.1   | Framework HTTP                               |
 | Prisma             | ^4.16.2  | ORM para base de datos                       |
 | MySQL              | v8.0+    | Base de datos relacional                     |
