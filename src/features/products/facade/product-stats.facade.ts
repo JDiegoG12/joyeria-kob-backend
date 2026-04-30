@@ -71,15 +71,18 @@ export class ProductStatsFacade implements IProductStatsFacade {
         };
       }
 
-      // Si la categoría existe, proceder con el conteo
+      // Obtener todos los IDs de categorías descendientes (incluyendo la propia)
+      const allCategoryIds =
+        await statsService.getDescendantCategoryIds(categoryId);
+
       const { total } = await statsService.fetchProductStats({
         statusFilter,
-        categoryId,
+        categoryIds: allCategoryIds, // Pasar el array de IDs
       });
       return {
         success: true,
         data: { categoryId: categoryId, cantidad: total },
-        message: `Cantidad de productos para la categoría ${categoryId} obtenida correctamente.`, // statusCode no es parte de FacadeSuccess
+        message: `Cantidad de productos para la categoría ${categoryId} (incluyendo subcategorías) obtenida correctamente.`,
       };
     }
 
@@ -88,7 +91,7 @@ export class ProductStatsFacade implements IProductStatsFacade {
       const { total, grouped } = await statsService.fetchProductStats({
         statusFilter,
         groupBy: serviceGroupBy,
-        categoryId,
+        // categoryIds no se pasa aquí porque si categoryId estuviera presente, el bloque anterior ya habría retornado.
       });
 
       const response: StatsResponseDTO = {
@@ -129,7 +132,6 @@ export class ProductStatsFacade implements IProductStatsFacade {
         success: true,
         data: response,
         message: 'Estadísticas obtenidas correctamente.',
-        // statusCode no es parte de FacadeSuccess, el controlador lo manejará
       };
     } catch (error) {
       console.error('Error in ProductStatsFacade:', error);
