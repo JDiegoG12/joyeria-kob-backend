@@ -1,10 +1,10 @@
 import { Prisma, ProductStatus } from '@prisma/client';
 import { prisma } from '../../../config/prisma';
 
-interface StatsParams {
+export interface StatsParams {
   statusFilter: ProductStatus[];
   groupBy?: 'categoryId' | 'status';
-  categoryId?: number;
+  categoryIds?: number[]; // Cambiado a un array para soportar múltiples IDs (categoría y sus descendientes)
 }
 
 // Define las interfaces para los resultados agrupados y el resultado total del servicio
@@ -34,7 +34,7 @@ export interface FetchProductStatsResult {
 export const fetchProductStats = async ({
   statusFilter,
   groupBy,
-  categoryId,
+  categoryIds, // Cambiado a categoryIds
 }: StatsParams): Promise<FetchProductStatsResult> => {
   const where: Prisma.ProductWhereInput = {
     status: {
@@ -42,9 +42,9 @@ export const fetchProductStats = async ({
     },
   };
 
-  // Add categoryId to the where clause if provided
-  if (categoryId) {
-    where.categoryId = categoryId;
+  // Add categoryIds to the where clause if provided
+  if (categoryIds && categoryIds.length > 0) {
+    where.categoryId = { in: categoryIds }; // Usa el operador 'in' para filtrar por múltiples IDs
   }
 
   const totalPromise = prisma.product.count({ where });
@@ -55,6 +55,7 @@ export const fetchProductStats = async ({
       by,
       where,
       _count: {
+        // Corregido el tipado de _count
         _all: true,
       },
     });
@@ -84,4 +85,30 @@ export const getCategoryMap = async (): Promise<Map<number, string>> => {
  */
 export const findCategoryById = async (id: number) => {
   return prisma.category.findUnique({ where: { id } });
+};
+
+/**
+ * Obtiene todos los IDs de categorías descendientes (incluyendo la propia) de una categoría dada.
+ * Utiliza un recorrido BFS (Breadth-First Search) para encontrar todos los hijos, nietos, etc.
+ *
+ * @param categoryId - El ID de la categoría inicial.
+ * @returns Una promesa que resuelve a un array de números, conteniendo los IDs de la categoría inicial y todos sus descendientes.
+ */
+export const getDescendantCategoryIds = async (
+  categoryId: number,
+): Promise<number[]> => {
+  const descendantIds: number[] = [];
+  const queue: number[] = [categoryId]; // Empezar con la categoría dada
+
+  while (queue.length > 0) {
+    const currentCategoryId = queue.shift()!;
+    descendantIds.push(currentCategoryId);
+
+    const children = await prisma.category.findMany({
+      where: { parentId: currentCategoryId },
+      select: { id: true },
+    });
+    children.forEach((child) => queue.push(child.id));
+  }
+  return [...new Set(descendantIds)]; // Eliminar duplicados si los hubiera (aunque en un árbol no debería haberlos con BFS)
 };
