@@ -11,7 +11,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "prepare": "husky",
     "prisma:generate": "npx prisma generate",
-    "db:migrate": "npx prisma migrate dev --name init",
+    "db:migrate": "npx prisma migrate dev",
     "db:seed": "copyfiles -f prisma/seed-images/* public/uploads/products && npx ts-node prisma/seed.ts",
     "db:setup": "npm run prisma:generate && npm run db:migrate && npm run db:seed",
     "test": "jest"
