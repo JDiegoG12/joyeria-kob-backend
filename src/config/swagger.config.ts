@@ -70,6 +70,50 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
+        BadRequestError: {
+          description:
+            'La solicitud es inválida, mal formada o contiene datos de negocio incorrectos.',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: false },
+                  error: { type: 'string', example: 'VALIDATION_ERROR' },
+                  message: {
+                    type: 'string',
+                    example: 'Errores de validación en los datos de entrada.',
+                  },
+                  details: {
+                    type: 'array',
+                    items: { type: 'object' },
+                    example: [
+                      { type: 'field', value: '', msg: 'El título es requerido', path: 'title', location: 'body' },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+        ForbiddenError: {
+          description: 'El cliente no tiene permisos para realizar esta acción.',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: false },
+                  error: { type: 'string', example: 'FORBIDDEN' },
+                  message: {
+                    type: 'string',
+                    example: 'No tienes permiso para acceder a este recurso.',
+                  },
+                },
+              },
+            },
+          },
+        },
         InternalServerError: {
           description: 'Ocurrió un error inesperado en el servidor.',
           content: {
