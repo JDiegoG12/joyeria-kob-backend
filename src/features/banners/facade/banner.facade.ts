@@ -31,7 +31,13 @@ class BannerFacade implements IBannerFacade {
       }
       return {
         success: true,
-        data: banner,
+        data: {
+          id: banner.id,
+          title: banner.title,
+          subtitle: banner.subtitle,
+          imageUrl: `/uploads/banners/${banner.imageUrl}`,
+          updatedAt: banner.updatedAt,
+        },
         message: 'Banner obtenido correctamente.',
       };
     } catch (error) {
@@ -112,7 +118,7 @@ class BannerFacade implements IBannerFacade {
           id: updatedBanner.id,
           title: updatedBanner.title,
           subtitle: updatedBanner.subtitle,
-          imageUrl: updatedBanner.imageUrl,
+          imageUrl: `/uploads/banners/${updatedBanner.imageUrl}`,
           updatedAt: updatedBanner.updatedAt,
         },
         message: 'Banner actualizado correctamente.',

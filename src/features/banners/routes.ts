@@ -33,24 +33,29 @@ const router = Router();
  *         imageUrl:
  *           type: string
  *           format: uri
- *           example: "http://localhost:4000/uploads/banners/banner-image.webp"
+ *           example: "/uploads/banners/banner-image.webp"
  *         updatedAt:
  *           type: string
  *           format: date-time
  *
  *     UpdateBannerFormData:
  *       type: object
+ *       required:
+ *         - title
+ *         - imageFile
  *       properties:
  *         title:
  *           type: string
  *           example: "Ofertas de Invierno"
+ *           description: "Título principal del banner. Es obligatorio."
  *         subtitle:
  *           type: string
  *           example: "Hasta 50% de descuento."
+ *           description: "Subtítulo del banner. Es opcional."
  *         imageFile:
  *           type: string
  *           format: binary
- *           description: "Archivo de imagen para el banner. Si se envía, reemplazará la imagen actual."
+ *           description: "Archivo de imagen para el banner. Es obligatorio."
  */
 
 /**
