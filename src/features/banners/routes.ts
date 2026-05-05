@@ -33,7 +33,7 @@ const router = Router();
  *         imageUrl:
  *           type: string
  *           format: uri
- *           example: "https://example.com/images/banner-verano.webp"
+ *           example: "http://localhost:4000/uploads/banners/banner-image.webp"
  *         updatedAt:
  *           type: string
  *           format: date-time

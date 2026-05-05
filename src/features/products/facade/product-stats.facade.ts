@@ -13,7 +13,7 @@ import * as statsService from '../services/product-stats.service';
 
 export class ProductStatsFacade implements IProductStatsFacade {
   async getStats(
-    user: TokenPayload,
+    user: TokenPayload | undefined,
     query: StatsQueryDTO,
   ): Promise<FacadeResult<StatsResponseDTO | CategoryStatsResponseDTO>> {
     const { agrupar, estado, categoryId } = query;
@@ -28,14 +28,15 @@ export class ProductStatsFacade implements IProductStatsFacade {
     }
 
     // 1. Determinar filtros según el rol del usuario
-    if (user.role === UserRole.CLIENT) {
-      // Clientes solo ven productos DISPONIBLES y no pueden agrupar por estado
+    if (!user || user.role === UserRole.CLIENT) {
+      // Clientes y usuarios no autenticados solo ven productos DISPONIBLES.
       statusFilter = [ProductStatus.AVAILABLE];
-      if (agrupar === 'estado') {
+      // Y no pueden agrupar por estado ni filtrar por estado.
+      if (agrupar === 'estado' || estado) {
         return {
           success: false,
           error: ERROR_CODES.FORBIDDEN,
-          message: 'Los clientes no tienen permiso para agrupar por estado.',
+          message: 'No tienes permiso para agrupar o filtrar por estado.',
           statusCode: 403,
         };
       }

@@ -15,8 +15,8 @@ export const getProductStatsController = async (
   req: AuthenticatedRequest,
   res: Response,
 ) => {
-  // El middleware authenticateToken garantiza que req.user exista.
-  const user = req.user!;
+  // El middleware ahora es opcional, por lo que req.user puede no existir.
+  const user = req.user;
   const { agrupar, estado, categoryId } = req.query;
 
   // Construye un DTO de consulta validado
