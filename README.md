@@ -134,8 +134,8 @@ El servidor quedará corriendo en `http://localhost:4000`.
 Para maximizar el uso del almacenamiento de Hostinger y garantizar una carga ultra-rápida (UX Premium), el backend no guarda imágenes crudas. Sigue este flujo:
 
 1.  **Recepción**: `Multer` recibe los archivos en memoria.
-2.  **Procesamiento**: `Sharp` redimensiona a 1000px y convierte a formato `.webp` (80% calidad).
-3.  **Persistencia**: Se guardan en `public/uploads/products/`.
+2.  **Procesamiento**: `Sharp` redimensiona a 1000px y convierte a formato `.webp` (80% de calidad).
+3.  **Persistencia**: Se guardan en la carpeta `public/DIRECTORIOX/imagen.webp`.
 4.  **Acceso**: Las imágenes son servidas como estáticos a través de la ruta `/uploads`.
 
 > **Nota para producción**: Asegúrate de que la carpeta `public/uploads` tenga permisos de escritura en tu servidor Hostinger.

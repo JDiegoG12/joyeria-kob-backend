@@ -3,6 +3,7 @@ import { uploadJewelImages } from '../../api/middlewares/upload.middleware';
 import {
   authenticateToken,
   requireAdmin,
+  optionalAuthenticateToken,
 } from '../../api/middlewares/auth.middleware';
 import {
   getProducts,
@@ -218,11 +219,11 @@ router.get('/', getProducts);
  *       - Productos
  *     summary: Obtener estadísticas de productos
  *     description: >
- *       Devuelve estadísticas sobre la cantidad de productos, con filtros y agrupaciones que dependen del rol del usuario.
- *       - **Clientes**: Solo pueden ver estadísticas de productos 'AVAILABLE'. No pueden agrupar por estado. Si se proporciona `categoryId`, solo se contarán productos 'AVAILABLE' de esa categoría.
- *       - **Administradores**: Pueden ver todos los productos, filtrar por estado y agrupar por categoría o estado.
+ *       Devuelve estadísticas sobre la cantidad de productos. Es un endpoint público con funcionalidades extendidas para administradores.
+ *       - **Público/Clientes**: Solo pueden ver estadísticas de productos 'AVAILABLE'. No pueden agrupar por estado ni filtrar por estado.
+ *       - **Administradores (con token)**: Pueden ver todos los productos, filtrar por un estado específico y agrupar por categoría o estado.
  *       - Si se proporciona `categoryId`, el parámetro `agrupar` será ignorado y la respuesta será un conteo simple para esa categoría.
- *     security:
+ *     security: # Se añade el esquema de seguridad para indicar que puede recibir un token.
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
@@ -281,7 +282,7 @@ router.get('/', getProducts);
  *         description: Acceso denegado (ej. cliente intentando agrupar por estado).
  *         $ref: '#/components/responses/ForbiddenError'
  */
-router.get('/stats', authenticateToken, getProductStatsController);
+router.get('/stats', optionalAuthenticateToken, getProductStatsController);
 
 /**
  * @openapi

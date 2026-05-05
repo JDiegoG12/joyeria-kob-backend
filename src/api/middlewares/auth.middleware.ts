@@ -66,6 +66,45 @@ export const authenticateToken = (
 };
 
 /**
+ * Middleware de autenticación opcional.
+ * Si se proporciona un token válido, decodifica el payload y lo adjunta a `req.user`.
+ * Si no se proporciona un token o es inválido, simplemente continúa sin un usuario autenticado.
+ * No bloquea la solicitud si no hay token.
+ */
+export const optionalAuthenticateToken = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    // No hay token, es un invitado. Continuar sin usuario.
+    return next();
+  }
+
+  jwt.verify(
+    token,
+    JWT_SECRET,
+    (err: VerifyErrors | null, decoded?: JwtPayload | string) => {
+      // Si hay un error (token inválido/expirado), lo tratamos como un invitado.
+      // No devolvemos un error, simplemente no adjuntamos el usuario.
+      if (err) {
+        return next();
+      }
+
+      if (typeof decoded === 'object' && decoded && 'id' in decoded) {
+        req.user = decoded as TokenPayload;
+      }
+
+      // Continuar en cualquier caso.
+      next();
+    },
+  );
+};
+
+/**
  * Middleware de autorización: verifica si el usuario autenticado tiene un rol específico.
  * Debe usarse siempre DESPUÉS del middleware `authenticateToken`.
  * @param requiredRole El rol que se requiere para acceder a la ruta.

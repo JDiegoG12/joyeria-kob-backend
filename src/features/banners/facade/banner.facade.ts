@@ -49,29 +49,18 @@ class BannerFacade implements IBannerFacade {
     data: UpdateBannerRequestDto,
     file?: Express.Multer.File,
   ): Promise<FacadeResult<BannerResponseDto>> {
+    // Validación: La imagen es siempre obligatoria.
+    // El validador de express-validator (banner.validator.ts) ya se encarga del título.
+    if (!file) {
+      return {
+        success: false,
+        error: ERROR_CODES.MISSING_FIELDS,
+        message: 'La imagen del banner es obligatoria.',
+        statusCode: 400,
+      };
+    }
+
     const existingBanner = await findBanner();
-
-    // Validación: Si se está creando (no hay banner existente), el título y la imagen son obligatorios.
-    if (!existingBanner && (!data.title?.trim() || !file)) {
-      return {
-        success: false,
-        error: ERROR_CODES.MISSING_FIELDS,
-        message:
-          'Para crear un banner, el título y la imagen son obligatorios.',
-        statusCode: 400,
-      };
-    }
-
-    // Validación: Si se está actualizando, es obligatorio proporcionar una nueva imagen.
-    if (existingBanner && !file) {
-      return {
-        success: false,
-        error: ERROR_CODES.MISSING_FIELDS,
-        message:
-          'Para actualizar el banner, es obligatorio proporcionar una nueva imagen.',
-        statusCode: 400,
-      };
-    }
 
     try {
       let imageUrl = existingBanner?.imageUrl;

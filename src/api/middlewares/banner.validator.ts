@@ -27,10 +27,9 @@ const handleValidationErrors = (
 export const updateBannerValidator = [
   // El título, si se proporciona, no puede ser una cadena vacía.
   body('title')
-    .optional()
     .trim()
     .notEmpty()
-    .withMessage('El título no puede ser un texto vacío.'),
+    .withMessage('El título es obligatorio y no puede estar vacío.'),
 
   // El subtítulo es opcional y puede ser una cadena vacía para limpiarlo.
   body('subtitle').optional({ checkFalsy: true }).trim(),
