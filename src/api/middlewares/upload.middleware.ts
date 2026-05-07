@@ -1,4 +1,5 @@
 import multer from 'multer';
+import { Request, Response, NextFunction } from 'express';
 
 // Configuración de almacenamiento en memoria para procesar con Sharp
 const storage = multer.memoryStorage();
@@ -7,7 +8,7 @@ const storage = multer.memoryStorage();
  * Filtro para aceptar solo archivos de imagen.
  */
 const fileFilter = (
-  req: Express.Request,
+  req: Request,
   file: Express.Multer.File,
   cb: multer.FileFilterCallback,
 ) => {
@@ -40,6 +41,33 @@ export const uploadJewelImages = upload.array('imageFiles', 5);
 
 /**
  * Middleware para subir una única imagen para el banner.
- * El campo en el form-data debe llamarse `imageFile`.
+ * El campo en el form-data debe llamarse `imageFile`. Es opcional.
+ *
+ * **Nota de implementación:**
+ * Se utiliza `upload.any()` en lugar de `upload.single()` para evitar un problema
+ * conocido en el que `multer` puede colgar la petición si un cliente (como Swagger UI)
+ * envía un campo de archivo con un valor explícitamente vacío.
+ *
+ * Esta implementación es más robusta:
+ * 1. Procesa todos los archivos y campos sin colgarse.
+ * 2. Busca manualmente el archivo con el `fieldname` 'imageFile'.
+ * 3. Si lo encuentra, lo asigna a `req.file` para mantener la compatibilidad con el resto de la aplicación.
+ * 4. Si no se envía ningún archivo, simplemente continúa al siguiente middleware.
  */
-export const uploadBannerImage = upload.single('imageFile');
+export const uploadBannerImage = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  upload.any()(req, res, (err) => {
+    if (err) {
+      return next(err);
+    }
+    if (req.files && Array.isArray(req.files)) {
+      req.file = (req.files as Express.Multer.File[]).find(
+        (file) => file.fieldname === 'imageFile',
+      );
+    }
+    next();
+  });
+};
