@@ -40,9 +40,9 @@ const router = Router();
  *
  *     UpdateBannerFormData:
  *       type: object
+ *       # 'title' sigue siendo requerido por el validador, pero 'imageFile' ya no.
  *       required:
  *         - title
- *         - imageFile
  *       properties:
  *         title:
  *           type: string
@@ -55,7 +55,7 @@ const router = Router();
  *         imageFile:
  *           type: string
  *           format: binary
- *           description: "Archivo de imagen para el banner. Es obligatorio."
+ *           description: "Archivo de imagen para el banner. Es opcional. Si no se envía, se conservará la imagen actual."
  */
 
 /**
@@ -93,11 +93,12 @@ router.get('/', getBannerController);
  *   put:
  *     tags:
  *       - Banner
- *     summary: '[ADMIN] Crear o actualizar el banner con imagen'
+ *     summary: '[ADMIN] Crear o actualizar el banner'
  *     description: >
  *       Crea o actualiza el banner principal. Esta operación es un "upsert".
- *       Acepta `multipart/form-data` para incluir un archivo de imagen.
- *       Si se proporciona `imageFile`, la imagen actual será reemplazada.
+ *       Acepta `multipart/form-data`.
+ *       El campo `imageFile` es opcional. Si se proporciona, la imagen actual será reemplazada. Si no, se conservará la existente.
+ *       El campo `title` es obligatorio.
  *     security:
  *       - bearerAuth: []
  *     requestBody:

@@ -17,7 +17,28 @@ import path from 'path';
 
 const BANNER_UPLOAD_PATH = path.join(process.cwd(), 'public/uploads/banners');
 
+/**
+ * Fachada para la gestión del banner principal.
+ *
+ * Responsabilidades:
+ * - Orquestar la obtención, creación, actualización y eliminación del banner.
+ * - Gestionar el procesamiento y almacenamiento de imágenes.
+ * - Manejar la eliminación de imágenes antiguas al actualizar.
+ * - Validar que siempre exista al menos una imagen configurada.
+ *
+ * Cambios realizados (ACTUALIZACIÓN):
+ * -  La imagen ahora es OPCIONAL en updateBanner.
+ * -  Permite actualizar solo el texto sin subir nueva imagen.
+ * -  Si no se proporciona archivo, conserva la imagen existente.
+ * -  Solo procesa y guarda nueva imagen si se sube un archivo.
+ */
 class BannerFacade implements IBannerFacade {
+  /**
+   * Obtiene el banner principal configurado.
+   *
+   * @returns El banner actual con su imagen, título y subtítulo.
+   * @returns 404 si no existe ningún banner configurado.
+   */
   async getBanner(): Promise<FacadeResult<BannerResponseDto | null>> {
     try {
       const banner = await findBanner();
@@ -51,31 +72,52 @@ class BannerFacade implements IBannerFacade {
     }
   }
 
+  /**
+   * Crea o actualiza el banner principal (operación upsert).
+   *
+   * CAMBIOS IMPORTANTES:
+   * - La imagen es ahora OPCIONAL.
+   * - Si no se proporciona `file`, se conserva la imagen existente.
+   * - Permite actualizar solo el texto sin necesidad de subir imagen.
+   * - Si se proporciona una nueva imagen, reemplaza a la anterior.
+   *
+   * @param data - Datos del banner (title, subtitle). Ambos son opcionales.
+   * @param file - Archivo de imagen opcional. Si es undefined, se mantiene la imagen actual.
+   * @returns El banner actualizado con la nueva configuración.
+   * @returns 500 si no se puede determinar una imagen (ni nueva ni existente).
+   *
+   * @example
+   * // Actualizar solo texto (sin cambiar imagen):
+   * await updateBanner({ title: 'Nuevo título', subtitle: 'Nuevo subtítulo' }, undefined)
+   *
+   * @example
+   * // Actualizar texto e imagen:
+   * await updateBanner({ title: 'Nuevo título' }, file)
+   *
+   * @example
+   * // Actualizar solo imagen (sin cambiar texto):
+   * await updateBanner({}, file)
+   */
   async updateBanner(
     data: UpdateBannerRequestDto,
     file?: Express.Multer.File,
   ): Promise<FacadeResult<BannerResponseDto>> {
-    // Validación: La imagen es siempre obligatoria.
-    // El validador de express-validator (banner.validator.ts) ya se encarga del título.
-    if (!file) {
-      return {
-        success: false,
-        error: ERROR_CODES.MISSING_FIELDS,
-        message: 'La imagen del banner es obligatoria.',
-        statusCode: 400,
-      };
-    }
+    // VALIDACIÓN CORREGIDA: La imagen ya NO es obligatoria
+    // Se eliminó el bloqueo: if (!file) { return error 400 }
+    // Ahora permitimos que file sea undefined para actualizar solo texto.
 
     const existingBanner = await findBanner();
 
     try {
+      // Inicializamos con la imagen existente (si hay una)
       let imageUrl = existingBanner?.imageUrl;
 
+      // Solo procesamos nueva imagen si se subió un archivo
       if (file) {
-        // 1. Procesar y guardar la nueva imagen en la carpeta de banners.
+        // 1. Procesar y guardar la nueva imagen en la carpeta de banners
         const newImageName = await processAndSaveImage(file, 'banners');
 
-        // 2. Si había una imagen antigua, eliminarla del sistema de archivos.
+        // 2. Eliminar la imagen anterior si existe (para no acumular archivos)
         if (imageUrl) {
           const oldImagePath = path.join(BANNER_UPLOAD_PATH, imageUrl);
           await fs
@@ -87,12 +129,14 @@ class BannerFacade implements IBannerFacade {
               ),
             );
         }
+
+        // Actualizamos imageUrl con el nombre del nuevo archivo
         imageUrl = newImageName;
       }
 
-      // Si no hay banner existente y no se proporcionó imagen, o si se está actualizando y la imagen se eliminó
-      // sin proporcionar una nueva, imageUrl podría ser undefined. Esto debería ser capturado por validaciones.
-      // Sin embargo, como salvaguarda y para asegurar el tipo para UpsertBannerServiceDto.
+      // VALIDACIÓN DE SEGURIDAD:
+      // Aseguramos que tengamos una imagen (nueva o existente)
+      // Esto previene guardar un banner sin imagen
       const finalImageUrl = imageUrl ?? existingBanner?.imageUrl;
       if (!finalImageUrl) {
         return {
@@ -104,16 +148,18 @@ class BannerFacade implements IBannerFacade {
         };
       }
 
+      // Preparamos los datos para el servicio de upsert
+      // Usamos los valores proporcionados o los existentes como fallback
       const upsertData: UpsertBannerServiceDto = {
-        title: data.title ?? existingBanner?.title ?? '', // Usar el título existente si no se proporciona uno nuevo
-        subtitle: data.subtitle ?? existingBanner?.subtitle ?? null, // Usar el subtítulo existente si no se proporciona uno nuevo
+        title: data.title ?? existingBanner?.title ?? '',
+        subtitle: data.subtitle ?? existingBanner?.subtitle ?? null,
         imageUrl: finalImageUrl,
       };
 
+      // Ejecutamos la actualización/creación en la base de datos
       const updatedBanner = await upsertBanner(upsertData);
       return {
         success: true,
-        // Devolvemos el DTO para ser consistentes con el GET y no exponer campos internos como createdAt
         data: {
           id: updatedBanner.id,
           title: updatedBanner.title,
@@ -134,11 +180,17 @@ class BannerFacade implements IBannerFacade {
     }
   }
 
+  /**
+   * Elimina permanentemente el banner principal y su imagen asociada.
+   *
+   * @returns 404 si no existe un banner para eliminar.
+   * @returns Éxito con 200 si se eliminó correctamente.
+   */
   async deleteBanner(): Promise<FacadeResult<null>> {
     try {
       const existingBanner = await findBanner();
 
-      // Si no existe un banner, no hay nada que eliminar.
+      // Si no existe un banner, no hay nada que eliminar
       if (!existingBanner) {
         return {
           success: false,
@@ -148,7 +200,7 @@ class BannerFacade implements IBannerFacade {
         };
       }
 
-      // Si el banner que se va a eliminar tiene una imagen, también la eliminamos.
+      // Si el banner tiene una imagen, la eliminamos del sistema de archivos
       if (existingBanner?.imageUrl) {
         const imagePath = path.join(
           BANNER_UPLOAD_PATH,
@@ -164,6 +216,7 @@ class BannerFacade implements IBannerFacade {
           );
       }
 
+      // Eliminamos el registro de la base de datos
       const deleteResult = await deleteBanner();
 
       if (deleteResult.count === 0) {
