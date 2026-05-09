@@ -1,6 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import { productFacade } from '../facade/product.facade';
 
+const parseOptionalNumber = (value: unknown): number | undefined => {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
 /**
  * Obtiene todos los productos del catálogo.
  */
@@ -17,6 +26,44 @@ export const getProducts = async (
       : undefined;
     const result = await productFacade.getProducts(isAdmin, categoryId);
 
+    res.status(result.status).json({
+      success: result.success,
+      data: result.data,
+      message: result.message,
+      ...(result.error && { error: result.error }),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Obtiene el catálogo público con filtros y paginación.
+ */
+export const getCatalogProducts = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const categoryIdRaw = parseOptionalNumber(req.query.categoryId);
+    const minPrice = parseOptionalNumber(req.query.minPrice);
+    const maxPrice = parseOptionalNumber(req.query.maxPrice);
+    const pageRaw = parseOptionalNumber(req.query.page);
+    const limitRaw = parseOptionalNumber(req.query.limit);
+
+    const categoryId =
+      categoryIdRaw !== undefined ? Math.trunc(categoryIdRaw) : undefined;
+    const page = pageRaw !== undefined ? Math.trunc(pageRaw) : undefined;
+    const limit = limitRaw !== undefined ? Math.trunc(limitRaw) : undefined;
+
+    const result = await productFacade.getCatalogProducts(
+      categoryId,
+      minPrice,
+      maxPrice,
+      page,
+      limit,
+    );
 
     res.status(result.status).json({
       success: result.success,

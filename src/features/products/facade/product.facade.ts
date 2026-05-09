@@ -3,9 +3,11 @@ import {
   FacadeResult,
   ProductWithCategoryAndPrice,
   ProductoWithPrice,
+  ProductCatalogResponse,
 } from '../ports/product.ports';
 import {
   getAllProductsService,
+  getCatalogProductsService,
   getProductByIdService,
   createProductService,
   deleteProductService,
@@ -31,6 +33,47 @@ class ProductFacade implements IProductFacade {
       };
     } catch (error) {
       console.error('[ProductFacade] getProducts error:', error);
+      return {
+        success: false,
+        error: ERROR_CODES.INTERNAL_ERROR,
+        message: 'Error al obtener el catálogo de productos.',
+        status: 500,
+      };
+    }
+  }
+
+  async getCatalogProducts(
+    categoryId: number | undefined,
+    minPrice: number | undefined,
+    maxPrice: number | undefined,
+    page: number | undefined,
+    limit: number | undefined,
+  ): Promise<FacadeResult<ProductCatalogResponse>> {
+    try {
+      const result = await getCatalogProductsService({
+        categoryId,
+        minPrice,
+        maxPrice,
+        page,
+        limit,
+      });
+      return {
+        success: true,
+        data: result,
+        message: 'Catalogo obtenido correctamente.',
+        status: 200,
+      };
+    } catch (error) {
+      console.error('[ProductFacade] getCatalogProducts error:', error);
+      const err = error as ServiceError;
+      if (err.code === ERROR_CODES.VALIDATION_ERROR) {
+        return {
+          success: false,
+          error: ERROR_CODES.VALIDATION_ERROR,
+          message: err.message || 'Parámetros de precio inválidos.',
+          status: err.status || 400,
+        };
+      }
       return {
         success: false,
         error: ERROR_CODES.INTERNAL_ERROR,
