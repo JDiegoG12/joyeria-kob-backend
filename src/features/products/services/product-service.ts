@@ -14,6 +14,14 @@ import path from 'path';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public/uploads/products');
 
+export type CatalogQueryParams = {
+  categoryId?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  page?: number;
+  limit?: number;
+};
+
 /**
  * Recupera el catálogo de productos aplicando filtrado por nivel de acceso.
  *
@@ -68,6 +76,70 @@ export const getAllProductsService = async (
       product.additionalValue.toNumber(),
     ),
   }));
+};
+
+/**
+ * Recupera el catálogo público con filtros por precio y paginación.
+ * La propiedad priceRange ignora los filtros de precio para reflejar el rango real de la categoría.
+ */
+export const getCatalogProductsService = async (params: CatalogQueryParams) => {
+  const { categoryId, minPrice, maxPrice, page, limit } = params;
+  const safePage = Math.max(1, Math.floor(page ?? 1));
+  const safeLimit = Math.min(Math.max(1, Math.floor(limit ?? 12)), 48);
+
+  if (minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice) {
+    throw {
+      code: 'VALIDATION_ERROR',
+      status: 400,
+      message: 'minPrice no puede ser mayor que maxPrice.',
+    };
+  }
+
+  const baseProducts = await getAllProductsService(false, categoryId);
+
+  let priceRangeMin = 0;
+  let priceRangeMax = 0;
+  if (baseProducts.length > 0) {
+    priceRangeMin = baseProducts.reduce(
+      (min, product) => Math.min(min, product.calculatedPrice),
+      baseProducts[0].calculatedPrice,
+    );
+    priceRangeMax = baseProducts.reduce(
+      (max, product) => Math.max(max, product.calculatedPrice),
+      baseProducts[0].calculatedPrice,
+    );
+  }
+
+  const filtered = baseProducts.filter((product) => {
+    if (minPrice !== undefined && product.calculatedPrice < minPrice) {
+      return false;
+    }
+    if (maxPrice !== undefined && product.calculatedPrice > maxPrice) {
+      return false;
+    }
+    return true;
+  });
+
+  const total = filtered.length;
+  const totalPages = total === 0 ? 0 : Math.ceil(total / safeLimit);
+  const startIndex = (safePage - 1) * safeLimit;
+  const products = filtered.slice(startIndex, startIndex + safeLimit);
+
+  return {
+    products,
+    pagination: {
+      total,
+      page: safePage,
+      limit: safeLimit,
+      totalPages,
+      hasNextPage: totalPages > 0 && safePage < totalPages,
+      hasPrevPage: totalPages > 0 && safePage > 1,
+    },
+    priceRange: {
+      min: priceRangeMin,
+      max: priceRangeMax,
+    },
+  };
 };
 
 /**

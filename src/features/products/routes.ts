@@ -7,6 +7,7 @@ import {
 } from '../../api/middlewares/auth.middleware';
 import {
   getProducts,
+  getCatalogProducts,
   getProduct,
   postProduct,
   removeProduct,
@@ -210,6 +211,109 @@ const router = Router();
  *                   example: "INTERNAL_ERROR"
  */
 router.get('/', getProducts);
+
+/**
+ * @openapi
+ * /api/products/catalog:
+ *   get:
+ *     tags:
+ *       - Productos
+ *     summary: Obtener catálogo público con paginación
+ *     description: Retorna productos disponibles del catálogo público con filtros por categoría y rango de precio.
+ *     parameters:
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: integer
+ *         description: "Filtra por ID de categoría. Si el ID pertenece a una categoría principal, devolverá automáticamente los productos de sus subcategorías."
+ *         example: 1
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *         description: "Filtra por precio mínimo (calculatedPrice >= minPrice)."
+ *         example: 100000
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *         description: "Filtra por precio máximo (calculatedPrice <= maxPrice)."
+ *         example: 2500000
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           minimum: 1
+ *         description: "Número de página, base 1. Default: 1."
+ *         example: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 12
+ *           minimum: 1
+ *           maximum: 48
+ *         description: "Productos por página. Default: 12, máximo: 48."
+ *         example: 12
+ *     responses:
+ *       '200':
+ *         description: Catálogo obtenido correctamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     products:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Product'
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: integer
+ *                           example: 183
+ *                         page:
+ *                           type: integer
+ *                           example: 1
+ *                         limit:
+ *                           type: integer
+ *                           example: 12
+ *                         totalPages:
+ *                           type: integer
+ *                           example: 16
+ *                         hasNextPage:
+ *                           type: boolean
+ *                           example: true
+ *                         hasPrevPage:
+ *                           type: boolean
+ *                           example: false
+ *                     priceRange:
+ *                       type: object
+ *                       properties:
+ *                         min:
+ *                           type: number
+ *                           example: 31000
+ *                         max:
+ *                           type: number
+ *                           example: 22264000
+ *                 message:
+ *                   type: string
+ *                   example: "Catalogo obtenido correctamente."
+ *                 error:
+ *                   type: string
+ *                   example: "INTERNAL_ERROR"
+ *       '500':
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get('/catalog', getCatalogProducts);
 
 /**
  * @openapi
