@@ -7,6 +7,7 @@ import adminRouter from '../features/admin/routes';
 import systemRouter from '../features/system/routes';
 import categoryRouter from '../features/categories/routes';
 import bannerRouter from '../features/banners/routes';
+import featuredProductRouter from '../features/featured-products/routes';
 import { errorHandler } from './middlewares/error.middleware';
 import path from 'path';
 import cors from 'cors';
@@ -35,6 +36,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/system', systemRouter);
 app.use('/api/users', authRouter);
 app.use('/api/banner', bannerRouter);
+app.use('/api/featured-products', featuredProductRouter);
 
 /**
  * @openapi
