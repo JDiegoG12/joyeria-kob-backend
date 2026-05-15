@@ -18,6 +18,16 @@ export type CatalogQueryParams = {
   categoryId?: number;
   minPrice?: number;
   maxPrice?: number;
+  /**
+   * Término de búsqueda por nombre de producto.
+   * La comparación es insensible a mayúsculas/minúsculas y busca coincidencias
+   * parciales en cualquier posición del nombre (dependiendo de la collation MySQL).
+   * Si es una cadena vacía o undefined, no se aplica ningún filtro de nombre.
+   *
+   * @example 'anillo'   → encuentra "Anillo Solitario", "Anillo Zafiro Real", etc.
+   * @example 'PULS'     → encuentra "Pulsera Oro", "Pulsera Esmeralda", etc.
+   */
+  search?: string;
   page?: number;
   limit?: number;
 };
@@ -25,13 +35,19 @@ export type CatalogQueryParams = {
 /**
  * Recupera el catálogo de productos aplicando filtrado por nivel de acceso.
  *
- * @param isAdmin - Determina si se exponen los productos ocultos o inactivos.
- * @param categoryId - Opcionalmente filtra por categoría específica. Si es padre, incluye los productos de sus subcategorías.
- * @returns Colección de productos disponibles vinculados a su categoría.
+ * @param isAdmin    - Determina si se exponen los productos ocultos o inactivos.
+ * @param categoryId - Opcionalmente filtra por categoría específica.
+ *                     Si es categoría padre, incluye también los productos de
+ *                     sus subcategorías directas (un nivel de profundidad).
+ * @param search     - Término opcional de búsqueda por nombre (insensible a
+ *                     mayúsculas, coincidencia parcial).
+ * @returns Colección de productos disponibles vinculados a su categoría,
+ *          cada uno con el precio calculado (`calculatedPrice`).
  */
 export const getAllProductsService = async (
   isAdmin: boolean = false,
   categoryId?: number,
+  search?: string,
 ) => {
   let targetCategoryIds: number[] | undefined = undefined;
 
@@ -54,11 +70,21 @@ export const getAllProductsService = async (
   const queryFilter: Prisma.ProductWhereInput = isAdmin
     ? {}
     : { status: 'AVAILABLE' as ProductStatus };
+
   if (targetCategoryIds) {
-    queryFilter.categoryId = { in: targetCategoryIds }; // Filtra por el padre Y los hijos
+    queryFilter.categoryId = { in: targetCategoryIds };
   }
 
-  // Buscamos productos
+  // ── Filtro de búsqueda por nombre ──────────────────────────────────────────
+  // Se aplica solo si `search` es una cadena con al menos un carácter no vacío.
+  // La insensibilidad a mayúsculas/minúsculas depende de la collation MySQL.
+  const trimmedSearch = search?.trim();
+  if (trimmedSearch) {
+    queryFilter.name = {
+      contains: trimmedSearch,
+    };
+  }
+
   const products = await prisma.product.findMany({
     where: queryFilter,
     include: { category: { include: { parent: true } } },
@@ -79,11 +105,27 @@ export const getAllProductsService = async (
 };
 
 /**
- * Recupera el catálogo público con filtros por precio y paginación.
- * La propiedad priceRange ignora los filtros de precio para reflejar el rango real de la categoría.
+ * Recupera el catálogo público con filtros por categoría, precio, nombre y paginación.
+ *
+ * ## Comportamiento del priceRange
+ * El campo `priceRange` de la respuesta refleja el rango REAL de la categoría
+ * activa (ignorando los filtros de precio y búsqueda), para que el slider del
+ * frontend siempre muestre el rango completo disponible en esa categoría.
+ *
+ * ## Orden de operaciones
+ * 1. `getAllProductsService` consulta la DB aplicando filtros de categoría,
+ *    acceso público y, si viene, la búsqueda por nombre.
+ * 2. Se calculan `priceRangeMin` y `priceRangeMax` sobre esos resultados
+ *    (antes de aplicar el filtro de precio) para alimentar el slider.
+ * 3. Se filtra por `minPrice` / `maxPrice` si están presentes.
+ * 4. Se pagina el resultado filtrado.
+ *
+ * @param params - Parámetros de filtrado y paginación.
+ * @returns Página de productos, metadata de paginación y rango real de precios.
+ * @throws `{ code: 'VALIDATION_ERROR' }` si minPrice > maxPrice.
  */
 export const getCatalogProductsService = async (params: CatalogQueryParams) => {
-  const { categoryId, minPrice, maxPrice, page, limit } = params;
+  const { categoryId, minPrice, maxPrice, search, page, limit } = params;
   const safePage = Math.max(1, Math.floor(page ?? 1));
   const safeLimit = Math.min(Math.max(1, Math.floor(limit ?? 12)), 48);
 
@@ -95,8 +137,13 @@ export const getCatalogProductsService = async (params: CatalogQueryParams) => {
     };
   }
 
-  const baseProducts = await getAllProductsService(false, categoryId);
+  // Pasamos `search` a getAllProductsService para que el filtro de nombre
+  // se aplique directamente en la consulta SQL, no en memoria.
+  const baseProducts = await getAllProductsService(false, categoryId, search);
 
+  // ── Rango de precios ────────────────────────────────────────────────────────
+  // Se calcula ANTES del filtro de precio para reflejar el rango real de la
+  // categoría/búsqueda activa, independientemente del rango seleccionado.
   let priceRangeMin = 0;
   let priceRangeMax = 0;
   if (baseProducts.length > 0) {
@@ -110,6 +157,9 @@ export const getCatalogProductsService = async (params: CatalogQueryParams) => {
     );
   }
 
+  // ── Filtro de precio ────────────────────────────────────────────────────────
+  // El precio calculado no está en la DB, por lo que este filtro se aplica
+  // en memoria después de obtener los productos de Prisma.
   const filtered = baseProducts.filter((product) => {
     if (minPrice !== undefined && product.calculatedPrice < minPrice) {
       return false;
@@ -320,7 +370,6 @@ export const updateProductService = async (
 
     if (imagesToDelete.length > 0) {
       for (const imgName of imagesToDelete) {
-        // Solo intentamos borrar si la imagen realmente pertenecía a este producto
         if (finalImages.includes(imgName)) {
           const targetPath = path.join(UPLOAD_DIR, imgName);
           await fs
