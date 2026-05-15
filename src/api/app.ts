@@ -18,7 +18,7 @@ const app: Application = express();
 //esto es pa que el cors del frontend no de problemas
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   }),
 );
