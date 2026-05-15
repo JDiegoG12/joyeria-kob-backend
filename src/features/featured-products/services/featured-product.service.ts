@@ -140,10 +140,19 @@ export const removeFeaturedProductService = async (
 
   await prisma.$transaction(async (tx) => {
     await tx.featuredProduct.delete({ where: { productId } });
-    await tx.featuredProduct.updateMany({
+
+    const toShift = await tx.featuredProduct.findMany({
       where: { position: { gt: existing.position } },
-      data: { position: { decrement: 1 } },
+      orderBy: { position: 'asc' },
+      select: { productId: true, position: true },
     });
+
+    for (const item of toShift) {
+      await tx.featuredProduct.update({
+        where: { productId: item.productId },
+        data: { position: item.position - 1 },
+      });
+    }
   });
 };
 
