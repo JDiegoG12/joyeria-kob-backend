@@ -219,7 +219,7 @@ router.get('/', getProducts);
  *     tags:
  *       - Productos
  *     summary: Obtener catálogo público con paginación
- *     description: Retorna productos disponibles del catálogo público con filtros por categoría y rango de precio.
+ *     description: Retorna productos disponibles del catálogo público con filtros por categoría, rango de precio y búsqueda por nombre.
  *     parameters:
  *       - in: query
  *         name: categoryId
@@ -239,6 +239,12 @@ router.get('/', getProducts);
  *           type: number
  *         description: "Filtra por precio máximo (calculatedPrice <= maxPrice)."
  *         example: 2500000
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: "Búsqueda parcial por nombre (insensible a mayúsculas si la collation lo permite)."
+ *         example: "anillo"
  *       - in: query
  *         name: page
  *         schema:

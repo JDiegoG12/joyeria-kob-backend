@@ -11,6 +11,24 @@ const parseOptionalNumber = (value: unknown): number | undefined => {
 };
 
 /**
+ * Extrae y sanitiza un parámetro de búsqueda de texto del query string.
+ *
+ * - Devuelve `undefined` si el valor es ausente, no es string, o es una
+ *   cadena vacía / solo espacios.
+ * - No hace trim aquí: el trim se hace en el service para mantener
+ *   la responsabilidad de limpieza de datos en la capa de negocio.
+ *
+ * @param value - Valor crudo de `req.query`.
+ * @returns String listo para pasar al service, o `undefined`.
+ */
+const parseOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return undefined;
+  }
+  return value;
+};
+
+/**
  * Obtiene todos los productos del catálogo.
  */
 export const getProducts = async (
@@ -19,7 +37,6 @@ export const getProducts = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    // Si la URL tiene un query ?admin=true, lo interpretamos como que el usuario es admin y le mostramos todo el catálogo, incluyendo los ocultos. Si no, solo mostramos los disponibles.
     const isAdmin = req.query.admin === 'true';
     const categoryId = req.query.categoryId
       ? Number(req.query.categoryId)
@@ -38,7 +55,32 @@ export const getProducts = async (
 };
 
 /**
- * Obtiene el catálogo público con filtros y paginación.
+ * Obtiene el catálogo público con filtros opcionales y paginación.
+ *
+ * ## Query params aceptados
+ * | Param        | Tipo    | Descripción                                                     |
+ * |:-------------|:--------|:----------------------------------------------------------------|
+ * | `categoryId` | integer | Filtra por ID de categoría (raíz o subcategoría). Opcional.    |
+ * | `minPrice`   | number  | Precio calculado mínimo en COP. Opcional.                      |
+ * | `maxPrice`   | number  | Precio calculado máximo en COP. Opcional.                      |
+ * | `search`     | string  | Búsqueda por nombre (insensible a mayúsculas, parcial). Nuevo. |
+ * | `page`       | integer | Página a recuperar, base 1. Default: 1.                        |
+ * | `limit`      | integer | Productos por página. Default: 12. Máximo: 48.                 |
+ *
+ * ## Comportamiento de `search`
+ * - Si `search` está presente y no es vacío, el filtro se aplica sobre el
+ *   campo `name` de todos los productos AVAILABLE de la categoría activa,
+ *   directamente en la consulta SQL (Prisma `contains`).
+ * - El filtrado ocurre en la DB, por lo que los resultados paginados
+ *   corresponden al catálogo completo que coincide con el término, no solo
+ *   a la página actual cargada en memoria.
+ * - El campo `pagination.total` refleja el número total de productos que
+ *   coinciden con la búsqueda, para que el frontend pueda mostrar el conteo
+ *   real y construir la paginación correctamente.
+ *
+ * @example
+ * GET /api/products/catalog?search=anillo&page=1&limit=12
+ * GET /api/products/catalog?search=PULS&categoryId=2&minPrice=100000
  */
 export const getCatalogProducts = async (
   req: Request,
@@ -51,6 +93,7 @@ export const getCatalogProducts = async (
     const maxPrice = parseOptionalNumber(req.query.maxPrice);
     const pageRaw = parseOptionalNumber(req.query.page);
     const limitRaw = parseOptionalNumber(req.query.limit);
+    const search = parseOptionalString(req.query.search);
 
     const categoryId =
       categoryIdRaw !== undefined ? Math.trunc(categoryIdRaw) : undefined;
@@ -61,6 +104,7 @@ export const getCatalogProducts = async (
       categoryId,
       minPrice,
       maxPrice,
+      search,
       page,
       limit,
     );

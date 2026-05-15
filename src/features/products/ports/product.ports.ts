@@ -45,6 +45,7 @@ export interface IProductFacade {
     categoryId: number | undefined,
     minPrice: number | undefined,
     maxPrice: number | undefined,
+    search: string | undefined,
     page: number | undefined,
     limit: number | undefined,
   ): Promise<FacadeResult<ProductCatalogResponse>>;

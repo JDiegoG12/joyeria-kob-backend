@@ -42,10 +42,26 @@ class ProductFacade implements IProductFacade {
     }
   }
 
+  /**
+   * Orquesta la consulta del catálogo público con todos sus filtros opcionales.
+   *
+   * Delega en `getCatalogProductsService` pasando el parámetro `search` que
+   * a su vez lo propaga a `getAllProductsService` para que el filtro de nombre
+   * se resuelva directamente en la consulta SQL (Prisma `contains`), operando
+   * sobre el catálogo completo y no solo sobre la página actual.
+   *
+   * @param categoryId - ID de categoría raíz o subcategoría. `undefined` = sin filtro.
+   * @param minPrice   - Precio calculado mínimo en COP. `undefined` = sin límite inferior.
+   * @param maxPrice   - Precio calculado máximo en COP. `undefined` = sin límite superior.
+   * @param search     - Texto de búsqueda por nombre. `undefined` o `''` = sin filtro.
+   * @param page       - Página a devolver (1-indexed). `undefined` → default 1.
+   * @param limit      - Productos por página. `undefined` → default 12. Máximo 48.
+   */
   async getCatalogProducts(
     categoryId: number | undefined,
     minPrice: number | undefined,
     maxPrice: number | undefined,
+    search: string | undefined,
     page: number | undefined,
     limit: number | undefined,
   ): Promise<FacadeResult<ProductCatalogResponse>> {
@@ -54,6 +70,7 @@ class ProductFacade implements IProductFacade {
         categoryId,
         minPrice,
         maxPrice,
+        search,
         page,
         limit,
       });
