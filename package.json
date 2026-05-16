@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "npm run prisma:generate && tsc",
-    "start": "npx prisma migrate deploy && node dist/index.js",
+    "start": "node -e \"console.log('START EJECUTADO')\" && npx prisma migrate deploy && node dist/index.js",
     "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\"",
     "prepare": "husky",
