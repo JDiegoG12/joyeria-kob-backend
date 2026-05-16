@@ -40,6 +40,12 @@ const upload = multer({
 export const uploadJewelImages = upload.array('imageFiles', 5);
 
 /**
+ * Middleware para subir una única imagen para el contenido social.
+ * El campo en el form-data debe llamarse `image`.
+ */
+export const uploadSocialContentImage = upload.single('image');
+
+/**
  * Middleware para subir una única imagen para el banner.
  * El campo en el form-data debe llamarse `imageFile`. Es opcional.
  *
