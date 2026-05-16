@@ -17,6 +17,7 @@ import {
   validateIdParam,
 } from '../../api/middlewares/social-content.validator';
 import { handleValidationErrors } from '../../api/middlewares/validation.middleware';
+import { asyncHandler } from '../../shared/utils/async-handler';
 
 const router = Router();
 
@@ -113,7 +114,7 @@ const router = Router();
  *                   items:
  *                     $ref: '#/components/schemas/SocialContentGetResponse'
  */
-router.get('/', getAllSocialContentsController);
+router.get('/', asyncHandler(getAllSocialContentsController));
 
 /**
  * @openapi
@@ -146,7 +147,7 @@ router.get(
   '/:id',
   validateIdParam,
   handleValidationErrors,
-  getSocialContentByIdController,
+  asyncHandler(getSocialContentByIdController),
 );
 
 /**
@@ -201,7 +202,7 @@ router.post(
   uploadSocialContentImage,
   createSocialContentValidator,
   handleValidationErrors,
-  createSocialContentController,
+  asyncHandler(createSocialContentController),
 );
 
 /**
@@ -260,7 +261,7 @@ router.put(
   validateIdParam,
   updateSocialContentValidator,
   handleValidationErrors,
-  updateSocialContentController,
+  asyncHandler(updateSocialContentController),
 );
 
 /**
@@ -294,7 +295,7 @@ router.delete(
   requireAdmin,
   validateIdParam,
   handleValidationErrors,
-  deleteSocialContentController,
+  asyncHandler(deleteSocialContentController),
 );
 
 export default router;

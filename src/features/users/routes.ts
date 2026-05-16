@@ -8,6 +8,7 @@ import {
 import { updateProfileValidator } from '../../api/middlewares/user.validator';
 import { authenticateToken } from '../../api/middlewares/auth.middleware';
 
+import { asyncHandler } from '../../shared/utils/async-handler';
 const router = Router();
 
 /**
@@ -63,7 +64,7 @@ const router = Router();
  *       409:
  *         description: El email ya está en uso.
  */
-router.post('/register', registerValidator, register);
+router.post('/register', registerValidator, asyncHandler(register));
 
 /**
  * @openapi
@@ -101,7 +102,7 @@ router.post('/register', registerValidator, register);
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */
-router.post('/login', loginValidator, login);
+router.post('/login', loginValidator, asyncHandler(login));
 
 /**
  * @openapi
@@ -161,7 +162,7 @@ router.put(
   '/me',
   authenticateToken,
   updateProfileValidator,
-  updateProfileController,
+  asyncHandler(updateProfileController),
 );
 
 /**
