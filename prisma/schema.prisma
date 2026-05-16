@@ -20,6 +20,14 @@ enum ProductStatus {
   HIDDEN
 }
 
+enum SocialNetwork {
+  YOUTUBE
+  TIKTOK
+  INSTAGRAM
+  FACEBOOK
+  OTHER
+}
+
 // ------------------------------
 // Modelo: Category (Categorías con autorelación)
 // ------------------------------
@@ -139,6 +147,7 @@ model User {
   role      UserRole @default(CLIENT)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  @@map("user")
 }
 model Banner {
   id        Int      @id @default(1)
@@ -147,4 +156,24 @@ model Banner {
   imageUrl  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  @@map("banner")
+}
+
+// ------------------------------
+// Modelo: SocialContent (Contenido para Redes Sociales)
+// ------------------------------
+// Almacena tarjetas de contenido para mostrar en el frontend,
+// enlazando a publicaciones de redes sociales.
+// ------------------------------
+model SocialContent {
+  id            Int           @id @default(autoincrement())
+  title         String        @db.VarChar(100)
+  imageUrl      String        @map("image_url")
+  link          String        @db.Text
+  socialNetwork SocialNetwork @map("social_network")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  @@index([socialNetwork])
+  @@map("social_contents")
 }
