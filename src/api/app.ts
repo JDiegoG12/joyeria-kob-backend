@@ -9,7 +9,7 @@ import categoryRouter from '../features/categories/routes';
 import bannerRouter from '../features/banners/routes';
 import featuredProductRouter from '../features/featured-products/routes';
 import socialContentRouter from '../features/social-content/routes';
-import { errorHandler } from './middlewares/error.middleware';
+import { globalErrorHandler } from './middlewares/error-handler.middleware';
 import path from 'path';
 import cors from 'cors';
 /**
@@ -70,6 +70,12 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
-app.use(errorHandler);
+// Middleware para servir archivos estáticos (imágenes)
 app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
+
+// --- MANEJO DE ERRORES ---
+// Este DEBE ser el último middleware que se registra para atrapar errores
+// de todas las rutas y middlewares anteriores.
+app.use(globalErrorHandler);
+
 export default app;

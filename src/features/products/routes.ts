@@ -14,6 +14,7 @@ import {
   putProduct,
 } from './controllers/product.controller';
 import { getProductStatsController } from './controllers/product-stats.controller';
+import { asyncHandler } from '../../shared/utils/async-handler';
 
 const router = Router();
 
@@ -210,7 +211,7 @@ const router = Router();
  *                   type: string
  *                   example: "INTERNAL_ERROR"
  */
-router.get('/', getProducts);
+router.get('/', asyncHandler(getProducts));
 
 /**
  * @openapi
@@ -319,7 +320,7 @@ router.get('/', getProducts);
  *       '500':
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.get('/catalog', getCatalogProducts);
+router.get('/catalog', asyncHandler(getCatalogProducts));
 
 /**
  * @openapi
@@ -392,7 +393,11 @@ router.get('/catalog', getCatalogProducts);
  *         description: Acceso denegado (ej. cliente intentando agrupar por estado).
  *         $ref: '#/components/responses/ForbiddenError'
  */
-router.get('/stats', optionalAuthenticateToken, getProductStatsController);
+router.get(
+  '/stats',
+  optionalAuthenticateToken,
+  asyncHandler(getProductStatsController),
+);
 
 /**
  * @openapi
@@ -432,7 +437,7 @@ router.get('/stats', optionalAuthenticateToken, getProductStatsController);
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.get('/:id', getProduct);
+router.get('/:id', asyncHandler(getProduct));
 
 /**
  * @openapi
@@ -504,7 +509,7 @@ router.post(
   authenticateToken,
   requireAdmin,
   uploadJewelImages,
-  postProduct,
+  asyncHandler(postProduct),
 );
 
 /**
@@ -545,7 +550,12 @@ router.post(
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.delete('/:id', authenticateToken, requireAdmin, removeProduct);
+router.delete(
+  '/:id',
+  authenticateToken,
+  requireAdmin,
+  asyncHandler(removeProduct),
+);
 
 /**
  * @openapi
@@ -597,7 +607,7 @@ router.put(
   authenticateToken,
   requireAdmin,
   uploadJewelImages,
-  putProduct,
+  asyncHandler(putProduct),
 );
 
 export default router;

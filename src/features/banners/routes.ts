@@ -10,6 +10,7 @@ import {
 } from './controllers/banner.controller';
 import { uploadBannerImage } from '../../api/middlewares/upload.middleware';
 import { updateBannerValidator } from '../../api/middlewares/banner.validator';
+import { asyncHandler } from '../../shared/utils/async-handler';
 
 const router = Router();
 
@@ -85,7 +86,7 @@ const router = Router();
  *       '404':
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.get('/', getBannerController);
+router.get('/', asyncHandler(getBannerController));
 
 /**
  * @openapi
@@ -136,7 +137,7 @@ router.put(
   requireAdmin,
   uploadBannerImage,
   updateBannerValidator,
-  updateBannerController,
+  asyncHandler(updateBannerController),
 );
 
 /**
@@ -170,6 +171,11 @@ router.put(
  *       '404':
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.delete('/', authenticateToken, requireAdmin, deleteBannerController);
+router.delete(
+  '/',
+  authenticateToken,
+  requireAdmin,
+  asyncHandler(deleteBannerController),
+);
 
 export default router;

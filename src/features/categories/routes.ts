@@ -11,6 +11,7 @@ import {
   updateCategoryController,
   removeCategoryController,
 } from './controllers/category.controller';
+import { asyncHandler } from '../../shared/utils/async-handler';
 
 const router = Router();
 
@@ -115,7 +116,7 @@ const router = Router();
  *                   type: string
  *                   example: 'Operación exitosa.'
  */
-router.get('/', getAllCategoriesController);
+router.get('/', asyncHandler(getAllCategoriesController));
 
 /**
  * @openapi
@@ -166,7 +167,7 @@ router.get('/', getAllCategoriesController);
  *                   type: string
  *                   example: "La categoría solicitada no existe en el catálogo."
  */
-router.get('/:id', getCategoryByIdController);
+router.get('/:id', asyncHandler(getCategoryByIdController));
 
 /**
  * @openapi
@@ -219,7 +220,7 @@ router.get('/:id', getCategoryByIdController);
  *                   type: string
  *                   example: "La categoría padre solicitada no existe."
  */
-router.get('/:id/children', getCategoryChildrenController);
+router.get('/:id/children', asyncHandler(getCategoryChildrenController));
 
 /**
  * @openapi
@@ -314,7 +315,12 @@ router.get('/:id/children', getCategoryChildrenController);
  *       403:
  *         $ref: '#/components/responses/ForbiddenError'
  */
-router.put('/:id', authenticateToken, requireAdmin, updateCategoryController);
+router.put(
+  '/:id',
+  authenticateToken,
+  requireAdmin,
+  asyncHandler(updateCategoryController),
+);
 
 /**
  * @openapi
@@ -385,7 +391,12 @@ router.put('/:id', authenticateToken, requireAdmin, updateCategoryController);
  *       403:
  *         $ref: '#/components/responses/ForbiddenError'
  */
-router.post('/', authenticateToken, requireAdmin, postCategoryController);
+router.post(
+  '/',
+  authenticateToken,
+  requireAdmin,
+  asyncHandler(postCategoryController),
+);
 
 /**
  * @openapi
@@ -467,7 +478,7 @@ router.delete(
   '/:id',
   authenticateToken,
   requireAdmin,
-  removeCategoryController,
+  asyncHandler(removeCategoryController),
 );
 
 export default router;

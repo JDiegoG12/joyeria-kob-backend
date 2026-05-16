@@ -7,6 +7,7 @@ import {
   authenticateToken,
   requireAdmin,
 } from '../../api/middlewares/auth.middleware';
+import { asyncHandler } from '../../shared/utils/async-handler';
 
 const router = Router();
 
@@ -47,7 +48,7 @@ router.get(
   '/history',
   authenticateToken,
   requireAdmin,
-  getGoldPriceHistoryController,
+  asyncHandler(getGoldPriceHistoryController),
 );
 /**
  * @openapi
@@ -85,7 +86,7 @@ router.put(
   '/gold-price',
   authenticateToken,
   requireAdmin,
-  updateGoldPriceController,
+  asyncHandler(updateGoldPriceController),
 );
 
 /**

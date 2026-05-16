@@ -5,6 +5,7 @@ import {
   authenticateToken,
   requireAdmin,
 } from '../../api/middlewares/auth.middleware';
+import { asyncHandler } from '../../shared/utils/async-handler';
 
 const router = Router();
 
@@ -63,12 +64,12 @@ const router = Router();
  *           format: date-time
  *           example: '2023-10-27T10:00:00.000Z'
  */
-router.get('/gold-price', getCurrentGoldPriceController);
+router.get('/gold-price', asyncHandler(getCurrentGoldPriceController));
 router.get(
   '/gold-price/history',
   authenticateToken,
   requireAdmin,
-  getGoldPriceHistoryController,
+  asyncHandler(getGoldPriceHistoryController),
 );
 
 export default router;

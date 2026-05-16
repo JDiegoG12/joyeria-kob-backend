@@ -9,6 +9,7 @@ import {
   removeFeaturedProductController,
   reorderFeaturedProductsController,
 } from './controllers/featured-product.controller';
+import { asyncHandler } from '../../shared/utils/async-handler';
 
 const router = Router();
 
@@ -85,7 +86,7 @@ const router = Router();
  *                   type: string
  *                   example: "Productos destacados obtenidos correctamente."
  */
-router.get('/', getFeaturedProductsController);
+router.get('/', asyncHandler(getFeaturedProductsController));
 
 /**
  * @openapi
@@ -126,7 +127,12 @@ router.get('/', getFeaturedProductsController);
  *       '403':
  *         $ref: '#/components/responses/ForbiddenError'
  */
-router.post('/', authenticateToken, requireAdmin, addFeaturedProductController);
+router.post(
+  '/',
+  authenticateToken,
+  requireAdmin,
+  asyncHandler(addFeaturedProductController),
+);
 
 /**
  * @openapi
@@ -170,7 +176,7 @@ router.delete(
   '/:productId',
   authenticateToken,
   requireAdmin,
-  removeFeaturedProductController,
+  asyncHandler(removeFeaturedProductController),
 );
 
 /**
@@ -218,7 +224,7 @@ router.put(
   '/reorder',
   authenticateToken,
   requireAdmin,
-  reorderFeaturedProductsController,
+  asyncHandler(reorderFeaturedProductsController),
 );
 
 export default router;
