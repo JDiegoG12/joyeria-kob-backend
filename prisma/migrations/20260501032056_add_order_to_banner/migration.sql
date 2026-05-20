@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE `Banner` (
+CREATE TABLE `banner` (
     `id` INTEGER NOT NULL DEFAULT 1,
     `title` VARCHAR(191) NOT NULL,
     `subtitle` VARCHAR(191) NULL,
