@@ -6,6 +6,7 @@ import {
   StatsQueryDTO,
   StatsResponseDTO,
   CategoryStatsResponseDTO,
+  TopFavoriteProductDTO,
 } from '../dtos/product-stats.dto';
 import { IProductStatsFacade } from '../ports/product-stats.ports';
 import { GroupedResult } from '../services/product-stats.service';
@@ -140,6 +141,40 @@ export class ProductStatsFacade implements IProductStatsFacade {
         success: false,
         error: ERROR_CODES.INTERNAL_ERROR,
         message: 'Ocurrió un error al procesar las estadísticas.',
+        statusCode: 500,
+      };
+    }
+  }
+
+  async getTopFavoriteProducts(
+    user: TokenPayload | undefined,
+    limit: number,
+  ): Promise<FacadeResult<TopFavoriteProductDTO[]>> {
+    if (!user || user.role !== UserRole.ADMIN) {
+      return {
+        success: false,
+        error: ERROR_CODES.FORBIDDEN,
+        message: 'No tienes permiso para consultar esta metrica.',
+        statusCode: 403,
+      };
+    }
+
+    try {
+      const topFavorites = await statsService.getTopFavoriteProducts(limit);
+      return {
+        success: true,
+        data: topFavorites,
+        message: 'Top de favoritos obtenido correctamente.',
+      };
+    } catch (error) {
+      console.error(
+        'Error in ProductStatsFacade.getTopFavoriteProducts:',
+        error,
+      );
+      return {
+        success: false,
+        error: ERROR_CODES.INTERNAL_ERROR,
+        message: 'Ocurrio un error al obtener el top de favoritos.',
         statusCode: 500,
       };
     }

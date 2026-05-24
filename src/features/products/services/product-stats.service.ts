@@ -1,5 +1,6 @@
 import { Prisma, ProductStatus } from '@prisma/client';
 import { prisma } from '../../../config/prisma';
+import { TopFavoriteProductDTO } from '../dtos/product-stats.dto';
 
 export interface StatsParams {
   statusFilter: ProductStatus[];
@@ -111,4 +112,32 @@ export const getDescendantCategoryIds = async (
     children.forEach((child) => queue.push(child.id));
   }
   return [...new Set(descendantIds)]; // Eliminar duplicados si los hubiera (aunque en un árbol no debería haberlos con BFS)
+};
+
+export const getTopFavoriteProducts = async (
+  limit: number,
+): Promise<TopFavoriteProductDTO[]> => {
+  const products = await prisma.product.findMany({
+    where: {
+      status: ProductStatus.AVAILABLE,
+      favorites: { some: {} },
+    },
+    orderBy: {
+      favorites: {
+        _count: 'desc',
+      },
+    },
+    take: limit,
+    select: {
+      id: true,
+      name: true,
+      _count: { select: { favorites: true } },
+    },
+  });
+
+  return products.map((product) => ({
+    productId: product.id,
+    name: product.name,
+    favoritesCount: product._count.favorites,
+  }));
 };

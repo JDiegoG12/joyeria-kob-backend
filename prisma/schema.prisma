@@ -84,6 +84,7 @@ model Product {
   // Relación con Categoría
   // Restrict: Evita borrar una categoría si tiene productos asignados
   category        Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  favorites       Favorite[]
 
   @@index([categoryId])
   @@index([status]) // Índice útil para filtrar en el catálogo del cliente
@@ -147,8 +148,32 @@ model User {
   role      UserRole @default(CLIENT)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  favorites Favorite[]
   @@map("user")
 }
+
+// ------------------------------
+// Modelo: Favorite (Carrito de Intereses / Wishlist)
+// ------------------------------
+// Tabla pivote que relaciona Usuarios con Productos.
+// Regla: Un usuario solo puede tener una vez un producto en favoritos (Unique).
+// ------------------------------
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id") @db.Char(36) // Asegúrate de que el tipo coincida con el ID de tu tabla User
+  productId String   @map("product_id") @db.Char(36)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Unicidad: El usuario no puede agregar el mismo producto dos veces
+  @@unique([userId, productId], name: "unique_user_product")
+  @@map("favorites")
+}
+
+
+
 model Banner {
   id        Int      @id @default(1)
   title     String
