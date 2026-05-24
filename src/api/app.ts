@@ -9,6 +9,7 @@ import categoryRouter from '../features/categories/routes';
 import bannerRouter from '../features/banners/routes';
 import featuredProductRouter from '../features/featured-products/routes';
 import socialContentRouter from '../features/social-content/routes';
+import favoriteRouter from '../features/favorites/routes';
 import { globalErrorHandler } from './middlewares/error-handler.middleware';
 import path from 'path';
 import cors from 'cors';
@@ -39,6 +40,7 @@ app.use('/api/users', authRouter); // Para /users/me
 app.use('/api/banner', bannerRouter);
 app.use('/api/featured-products', featuredProductRouter);
 app.use('/api/social-contents', socialContentRouter);
+app.use('/api/favorites', favoriteRouter);
 
 /**
  * @openapi

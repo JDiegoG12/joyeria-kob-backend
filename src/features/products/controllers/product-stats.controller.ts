@@ -3,8 +3,11 @@ import { AuthenticatedRequest } from '../../../api/middlewares/auth.middleware';
 import { ProductStatsFacade } from '../facade/product-stats.facade';
 import { StatsQueryDTO } from '../dtos/product-stats.dto';
 import { ProductStatus } from '@prisma/client';
+import { ERROR_CODES } from '../../../shared/constants/error-codes';
 
 const statsFacade = new ProductStatsFacade();
+const DEFAULT_TOP_FAVORITES_LIMIT = 10;
+const MAX_TOP_FAVORITES_LIMIT = 50;
 
 /**
  * Controlador para manejar las peticiones de estadísticas de productos.
@@ -56,6 +59,49 @@ export const getProductStatsController = async (
 
   return res.status(200).json({
     // Usar el statusCode de la fachada
+    success: true,
+    data: result.data,
+    message: result.message,
+  });
+};
+
+/**
+ * Controlador para obtener el top de productos con mas favoritos.
+ */
+export const getTopFavoriteProductsController = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  const user = req.user;
+  let limit = DEFAULT_TOP_FAVORITES_LIMIT;
+
+  if (req.query.limit !== undefined) {
+    const parsedLimit = Number(req.query.limit);
+    if (
+      !Number.isFinite(parsedLimit) ||
+      parsedLimit < 1 ||
+      parsedLimit > MAX_TOP_FAVORITES_LIMIT
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: ERROR_CODES.VALIDATION_ERROR,
+        message: `El parametro limit debe estar entre 1 y ${MAX_TOP_FAVORITES_LIMIT}.`,
+      });
+    }
+    limit = Math.trunc(parsedLimit);
+  }
+
+  const result = await statsFacade.getTopFavoriteProducts(user, limit);
+
+  if (!result.success) {
+    return res.status(result.statusCode!).json({
+      success: false,
+      error: result.error,
+      message: result.message,
+    });
+  }
+
+  return res.status(200).json({
     success: true,
     data: result.data,
     message: result.message,

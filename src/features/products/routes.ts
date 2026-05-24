@@ -13,7 +13,10 @@ import {
   removeProduct,
   putProduct,
 } from './controllers/product.controller';
-import { getProductStatsController } from './controllers/product-stats.controller';
+import {
+  getProductStatsController,
+  getTopFavoriteProductsController,
+} from './controllers/product-stats.controller';
 import { asyncHandler } from '../../shared/utils/async-handler';
 
 const router = Router();
@@ -166,6 +169,20 @@ const router = Router();
  *           items:
  *             type: string
  *             format: binary
+ *
+ *     TopFavoriteProduct:
+ *       type: object
+ *       properties:
+ *         productId:
+ *           type: string
+ *           format: uuid
+ *           example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+ *         name:
+ *           type: string
+ *           example: "Anillo Solitario Zafiro Real"
+ *         favoritesCount:
+ *           type: integer
+ *           example: 42
  */
 
 /**
@@ -397,6 +414,57 @@ router.get(
   '/stats',
   optionalAuthenticateToken,
   asyncHandler(getProductStatsController),
+);
+
+/**
+ * @openapi
+ * /api/products/favorites/top:
+ *   get:
+ *     tags:
+ *       - Productos
+ *     summary: '[ADMIN] Obtener top de productos con mas favoritos'
+ *     description: Retorna los productos AVAILABLE con mas usuarios en favoritos.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           minimum: 1
+ *           maximum: 50
+ *         description: Cantidad maxima de productos a retornar.
+ *     responses:
+ *       '200':
+ *         description: Top de favoritos obtenido correctamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/TopFavoriteProduct'
+ *                 message:
+ *                   type: string
+ *                   example: "Top de favoritos obtenido correctamente."
+ *       '400':
+ *         $ref: '#/components/responses/BadRequestError'
+ *       '401':
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       '403':
+ *         $ref: '#/components/responses/ForbiddenError'
+ */
+router.get(
+  '/favorites/top',
+  authenticateToken,
+  requireAdmin,
+  asyncHandler(getTopFavoriteProductsController),
 );
 
 /**

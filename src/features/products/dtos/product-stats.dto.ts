@@ -16,3 +16,13 @@ export interface CategoryStatsResponseDTO {
   categoryId: number;
   cantidad: number;
 }
+
+export interface TopFavoritesQueryDTO {
+  limit?: number;
+}
+
+export interface TopFavoriteProductDTO {
+  productId: string;
+  name: string;
+  favoritesCount: number;
+}
