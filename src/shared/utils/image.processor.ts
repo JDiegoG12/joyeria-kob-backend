@@ -30,7 +30,10 @@ export const processAndSaveImage = async (
   const filename = `${uuidv4()}.webp`; // Generar un nombre único para la imagen optimizada (Alta calidad bajo peso)
   const filePath = path.join(uploadPath, filename); // Ruta completa donde se guardará la imagen optimizada
 
-  let imageProcessor = sharp(file.buffer);
+  // .rotate() sin argumentos auto-orienta según el tag EXIF Orientation y lo
+  // limpia. Sin esto, sharp descarta el EXIF al re-codificar a WebP y los
+  // píxeles quedan en la orientación cruda del sensor (imagen rotada).
+  let imageProcessor = sharp(file.buffer).rotate();
 
   if (subfolder === 'banners') {
     // Para banners, redimensionar a 1920x1080, cubriendo el área y recortando si es necesario.
