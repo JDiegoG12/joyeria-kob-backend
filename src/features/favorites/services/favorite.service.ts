@@ -38,13 +38,27 @@ const mapFavoriteWithPrice = (
   };
 };
 
+/**
+ * Obtiene los favoritos de un usuario, incluyendo el producto con su precio
+ * calculado.
+ *
+ * @param userId - ID del usuario dueño de los favoritos.
+ * @param options.onlyAvailable - Si es `true` (valor por defecto) solo se
+ *   devuelven favoritos cuyo producto está `AVAILABLE` (vista de tienda). El
+ *   panel administrativo lo invoca con `false` para ver TODOS los favoritos del
+ *   cliente, sin importar el estado del producto.
+ * @returns Lista de favoritos con el producto y su precio final.
+ */
 export const getUserFavoritesService = async (
   userId: string,
+  options: { onlyAvailable?: boolean } = {},
 ): Promise<FavoriteWithProduct[]> => {
+  const { onlyAvailable = true } = options;
+
   const favorites = await prisma.favorite.findMany({
     where: {
       userId,
-      product: { status: 'AVAILABLE' },
+      ...(onlyAvailable && { product: { status: 'AVAILABLE' } }),
     },
     include: {
       product: { include: { category: { include: { parent: true } } } },
