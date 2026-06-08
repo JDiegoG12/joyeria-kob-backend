@@ -28,6 +28,16 @@ enum SocialNetwork {
   OTHER
 }
 
+// Destino al que apunta un banner de promoción del carrusel.
+// PRODUCT   → abre el detalle de un producto en el catálogo.
+// CATEGORY  → filtra el catálogo por una categoría.
+// NONE      → banner puramente informativo, sin navegación.
+enum PromoLinkType {
+  PRODUCT
+  CATEGORY
+  NONE
+}
+
 // ------------------------------
 // Modelo: Category (Categorías con autorelación)
 // ------------------------------
@@ -71,6 +81,7 @@ model Product {
   description     String        @db.Text
   baseWeight      Decimal       @db.Decimal(10, 2) @map("base_weight")
   additionalValue Decimal       @db.Decimal(10, 2) @default(0) @map("additional_value")
+  discountValue   Decimal       @db.Decimal(10, 2) @default(0) @map("discount_value")
   stock           Int           @default(1)
   status          ProductStatus @default(AVAILABLE)
   featured        FeaturedProduct? // Relación opcional con FeaturedProduct 
@@ -182,6 +193,31 @@ model Banner {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@map("banner")
+}
+
+// ------------------------------
+// Modelo: PromoBanner (Banners de promoción del carrusel)
+// ------------------------------
+// Imágenes adicionales del carrusel hero de la home, mostradas SIEMPRE después
+// del banner principal. Cada una puede enlazar a un producto, una categoría o a
+// nada. El orden lo define `position` (gestionado manualmente desde el admin).
+// No se usan FKs duras hacia Product/Category: la existencia del destino se
+// valida en el servicio al crear/editar, evitando bloquear borrados.
+// ------------------------------
+model PromoBanner {
+  id             Int           @id @default(autoincrement())
+  title          String?       @db.VarChar(120)
+  subtitle       String?       @db.VarChar(200)
+  imageUrl       String        @map("image_url")
+  position       Int
+  linkType       PromoLinkType @default(NONE) @map("link_type")
+  linkProductId  String?       @map("link_product_id") @db.Char(36)
+  linkCategoryId Int?          @map("link_category_id")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  @@unique([position])
+  @@map("promo_banners")
 }
 
 // ------------------------------

@@ -40,6 +40,7 @@ export interface ICreateProductDTO extends IProductBase {
 export type IUpdateProductDTO = Partial<ICreateProductDTO> & {
   status?: ProductStatus;
   imagesToDelete?: string[]; // Imágenes a borrar del almacenamiento y la BD
+  discountValue?: number; // Descuento fijo en COP. 0 = sin descuento.
 };
 
 /**
@@ -61,4 +62,5 @@ export type IProductCreateRaw = IRawInput<Omit<ICreateProductDTO, 'images'>>;
 export type IProductUpdateRaw = Partial<IProductCreateRaw> & {
   status?: string; // El status también viene como string
   imagesToDelete?: string; // Llega como string desde el FormData (ej: '["img1.webp", "img2.webp"]')
+  discountValue?: string; // Descuento en COP, llega como string desde el FormData.
 };

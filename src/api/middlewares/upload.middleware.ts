@@ -46,6 +46,12 @@ export const uploadJewelImages = upload.array('imageFiles', 5);
 export const uploadSocialContentImage = upload.single('image');
 
 /**
+ * Middleware para subir una única imagen para un banner de promoción del carrusel.
+ * El campo en el form-data debe llamarse `image`.
+ */
+export const uploadPromoBannerImage = upload.single('image');
+
+/**
  * Middleware para subir una única imagen para el banner.
  * El campo en el form-data debe llamarse `imageFile`. Es opcional.
  *

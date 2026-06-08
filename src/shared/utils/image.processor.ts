@@ -10,17 +10,17 @@ const BASE_UPLOAD_PATH = path.join(process.cwd(), 'public/uploads');
 /**
  * Procesa una imagen, la optimiza en formato WebP y la guarda en el sistema de archivos.
  * La resolución de salida depende de la subcarpeta:
- * - `banners`: 1920x1080 (recortado para cubrir).
+ * - `banners` / `promo-banners`: 1920x1080 (recortado para cubrir).
  * - `social-content`: 1080x1920 (recortado para cubrir, formato vertical 9:16).
  * - `products`: Máximo 1000x1000 (contenido dentro).
  *
  * @param file Archivo de imagen a procesar (de Multer).
- * @param subfolder Subcarpeta de destino ('products', 'banners' o 'social-content').
+ * @param subfolder Subcarpeta de destino ('products', 'banners', 'promo-banners' o 'social-content').
  * @returns El nombre del archivo optimizado guardado.
  */
 export const processAndSaveImage = async (
   file: Express.Multer.File,
-  subfolder: 'products' | 'banners' | 'social-content' = 'products',
+  subfolder: 'products' | 'banners' | 'social-content' | 'promo-banners' = 'products',
 ): Promise<string> => {
   const uploadPath = path.join(BASE_UPLOAD_PATH, subfolder);
 
@@ -35,8 +35,9 @@ export const processAndSaveImage = async (
   // píxeles quedan en la orientación cruda del sensor (imagen rotada).
   let imageProcessor = sharp(file.buffer).rotate();
 
-  if (subfolder === 'banners') {
-    // Para banners, redimensionar a 1920x1080, cubriendo el área y recortando si es necesario.
+  if (subfolder === 'banners' || subfolder === 'promo-banners') {
+    // Para banners (principal y de promoción del carrusel), redimensionar a
+    // 1920x1080, cubriendo el área y recortando si es necesario.
     imageProcessor = imageProcessor.resize(1920, 1080, {
       fit: 'cover', // Cubre el área, puede recortar.
       position: 'center', // Centra la imagen antes de recortar.

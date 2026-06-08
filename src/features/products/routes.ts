@@ -50,6 +50,14 @@ const router = Router();
  *         calculatedPrice:
  *           type: number
  *           example: 3225000
+ *         discountValue:
+ *           type: number
+ *           description: Descuento fijo en COP. 0 = sin descuento.
+ *           example: 200000
+ *         finalPrice:
+ *           type: number
+ *           description: Precio con el descuento aplicado (calculatedPrice - discountValue, nunca menor a 0).
+ *           example: 3025000
  *         stock:
  *           type: integer
  *           example: 5
@@ -147,6 +155,10 @@ const router = Router();
  *         stock:
  *           type: integer
  *           example: 0
+ *         discountValue:
+ *           type: number
+ *           description: Descuento fijo en COP. Debe ser >= 0 y no superar el precio actual. Enviar 0 para quitar el descuento.
+ *           example: 200000
  *         status:
  *           type: string
  *           enum: [AVAILABLE, OUT_OF_STOCK, HIDDEN]

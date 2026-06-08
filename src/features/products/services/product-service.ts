@@ -94,14 +94,22 @@ export const getAllProductsService = async (
   const settings = await prisma.systemSetting.findUnique({ where: { id: 1 } });
   const goldPrice = settings?.goldPricePerGram.toNumber() || 350000;
 
-  return products.map((product) => ({
-    ...product,
-    calculatedPrice: calculateSuggestedPrice(
+  return products.map((product) => {
+    const calculatedPrice = calculateSuggestedPrice(
       product.baseWeight.toNumber(),
       goldPrice,
       product.additionalValue.toNumber(),
-    ),
-  }));
+    );
+    const discountValue = product.discountValue.toNumber();
+    return {
+      ...product,
+      calculatedPrice,
+      discountValue,
+      // Precio con descuento aplicado. Se limita a 0 para que nunca sea
+      // negativo si el precio del oro bajó y el descuento supera el precio.
+      finalPrice: Math.max(calculatedPrice - discountValue, 0),
+    };
+  });
 };
 
 /**
@@ -209,13 +217,18 @@ export const getProductByIdService = async (id: string) => {
   const settings = await prisma.systemSetting.findUnique({ where: { id: 1 } });
   const goldPrice = settings?.goldPricePerGram.toNumber() || 350000;
 
+  const calculatedPrice = calculateSuggestedPrice(
+    product.baseWeight.toNumber(),
+    goldPrice,
+    product.additionalValue.toNumber(),
+  );
+  const discountValue = product.discountValue.toNumber();
+
   return {
     ...product,
-    calculatedPrice: calculateSuggestedPrice(
-      product.baseWeight.toNumber(),
-      goldPrice,
-      product.additionalValue.toNumber(),
-    ),
+    calculatedPrice,
+    discountValue,
+    finalPrice: Math.max(calculatedPrice - discountValue, 0),
   };
 };
 
@@ -284,6 +297,8 @@ export const createProductService = async (
   return {
     ...newProduct,
     calculatedPrice,
+    discountValue: newProduct.discountValue.toNumber(),
+    finalPrice: calculatedPrice, // Recién creado, sin descuento.
   };
 };
 
@@ -361,6 +376,12 @@ export const updateProductService = async (
       ? JSON.parse(rawData.specifications)
       : undefined,
     status: rawData.status as ProductStatus | undefined,
+    // El descuento llega como string desde el FormData. Se acepta '0' (quitar
+    // descuento). Solo es `undefined` cuando el campo no viene en la petición.
+    discountValue:
+      rawData.discountValue !== undefined && rawData.discountValue !== ''
+        ? Number(rawData.discountValue)
+        : undefined,
   };
 
   let finalImages = currentProduct.images as string[];
@@ -414,6 +435,29 @@ export const updateProductService = async (
     operativeValueAdded,
   );
 
+  // ── Validación del descuento ────────────────────────────────────────────────
+  // El descuento (COP) no puede superar el precio actual del producto. Se valida
+  // contra el precio recalculado para reflejar el valor real en el momento del
+  // guardado. Se permite 0 (quitar descuento) y valores negativos se rechazan.
+  if (cleanData.discountValue !== undefined) {
+    if (
+      !Number.isFinite(cleanData.discountValue) ||
+      cleanData.discountValue < 0
+    ) {
+      throw {
+        code: 'BUSINESS_CONSTRAINT_FAILED',
+        message: 'El descuento debe ser un valor en COP mayor o igual a 0.',
+      };
+    }
+    if (cleanData.discountValue > recalibratedPricing) {
+      throw {
+        code: 'BUSINESS_CONSTRAINT_FAILED',
+        message:
+          'El descuento no puede superar el precio actual del producto.',
+      };
+    }
+  }
+
   const referenceStock = cleanData.stock ?? currentProduct.stock;
   let reactiveStatus =
     cleanData.status ?? (currentProduct.status as ProductStatus);
@@ -434,8 +478,12 @@ export const updateProductService = async (
     },
   });
 
+  const finalDiscount = updatedProduct.discountValue.toNumber();
+
   return {
     ...updatedProduct,
     calculatedPrice: recalibratedPricing,
+    discountValue: finalDiscount,
+    finalPrice: Math.max(recalibratedPricing - finalDiscount, 0),
   };
 };

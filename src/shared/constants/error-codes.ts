@@ -33,6 +33,8 @@ export const ERROR_CODES = {
   // Errores de contenido social
   SOCIAL_CONTENT_NOT_FOUND: 'SOCIAL_CONTENT_NOT_FOUND',
   MAX_ITEMS_REACHED: 'MAX_ITEMS_REACHED',
+  // Errores de banners de promoción
+  PROMO_BANNER_NOT_FOUND: 'PROMO_BANNER_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];

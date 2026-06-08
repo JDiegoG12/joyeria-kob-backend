@@ -20,17 +20,23 @@ const getGoldPrice = async (): Promise<number> => {
 const mapFavoriteWithPrice = (
   favorite: FavoriteWithProductPayload,
   goldPrice: number,
-): FavoriteWithProduct => ({
-  ...favorite,
-  product: {
-    ...favorite.product,
-    calculatedPrice: calculateSuggestedPrice(
-      favorite.product.baseWeight.toNumber(),
-      goldPrice,
-      favorite.product.additionalValue.toNumber(),
-    ),
-  },
-});
+): FavoriteWithProduct => {
+  const calculatedPrice = calculateSuggestedPrice(
+    favorite.product.baseWeight.toNumber(),
+    goldPrice,
+    favorite.product.additionalValue.toNumber(),
+  );
+  const discountValue = favorite.product.discountValue.toNumber();
+  return {
+    ...favorite,
+    product: {
+      ...favorite.product,
+      calculatedPrice,
+      discountValue,
+      finalPrice: Math.max(calculatedPrice - discountValue, 0),
+    },
+  };
+};
 
 export const getUserFavoritesService = async (
   userId: string,

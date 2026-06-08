@@ -9,6 +9,7 @@ import categoryRouter from '../features/categories/routes';
 import bannerRouter from '../features/banners/routes';
 import featuredProductRouter from '../features/featured-products/routes';
 import socialContentRouter from '../features/social-content/routes';
+import promoBannerRouter from '../features/promo-banners/routes';
 import favoriteRouter from '../features/favorites/routes';
 import { globalErrorHandler } from './middlewares/error-handler.middleware';
 import path from 'path';
@@ -18,9 +19,23 @@ import cors from 'cors';
  */
 const app: Application = express();
 //esto es pa que el cors del frontend no de problemas
+// Orígenes permitidos: con y sin www
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map((url) => url.trim())
+  : [];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: (origin, callback) => {
+      // Permite llamadas sin origin (Postman, mobile apps, SSR)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origen no permitido por CORS: ${origin}`));
+      }
+    },
     credentials: true,
   }),
 );
@@ -40,6 +55,7 @@ app.use('/api/users', authRouter); // Para /users/me
 app.use('/api/banner', bannerRouter);
 app.use('/api/featured-products', featuredProductRouter);
 app.use('/api/social-contents', socialContentRouter);
+app.use('/api/promo-banners', promoBannerRouter);
 app.use('/api/favorites', favoriteRouter);
 
 /**

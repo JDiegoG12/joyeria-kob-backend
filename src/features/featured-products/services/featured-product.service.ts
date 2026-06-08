@@ -20,17 +20,23 @@ const getGoldPrice = async (): Promise<number> => {
 const mapFeaturedWithPrice = (
   item: FeaturedProductWithProduct,
   goldPrice: number,
-): FeaturedProductWithPrice => ({
-  ...item,
-  product: {
-    ...item.product,
-    calculatedPrice: calculateSuggestedPrice(
-      item.product.baseWeight.toNumber(),
-      goldPrice,
-      item.product.additionalValue.toNumber(),
-    ),
-  },
-});
+): FeaturedProductWithPrice => {
+  const calculatedPrice = calculateSuggestedPrice(
+    item.product.baseWeight.toNumber(),
+    goldPrice,
+    item.product.additionalValue.toNumber(),
+  );
+  const discountValue = item.product.discountValue.toNumber();
+  return {
+    ...item,
+    product: {
+      ...item.product,
+      calculatedPrice,
+      discountValue,
+      finalPrice: Math.max(calculatedPrice - discountValue, 0),
+    },
+  };
+};
 
 const getPositionSet = (items: ReorderFeaturedProductsDto) =>
   new Set(items.map((item) => item.position));

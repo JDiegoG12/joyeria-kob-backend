@@ -1,8 +1,15 @@
 import { Product, Category } from '@prisma/client';
 import { IProductCreateRaw, IProductUpdateRaw } from '../models/product-types';
 
-export type ProductoWithPrice = Omit<Product, 'calculatedPrice'> & {
+export type ProductoWithPrice = Omit<
+  Product,
+  'calculatedPrice' | 'discountValue'
+> & {
   calculatedPrice: number;
+  /** Descuento fijo en COP (0 = sin descuento). */
+  discountValue: number;
+  /** Precio con el descuento aplicado, nunca menor a 0. */
+  finalPrice: number;
 };
 export type ProductWithCategoryAndPrice = ProductoWithPrice & {
   category: Category;
