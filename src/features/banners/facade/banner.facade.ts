@@ -13,9 +13,8 @@ import {
 } from '../dtos/update-banner.dto';
 import { processAndSaveImage } from '../../../shared/utils/image.processor';
 import fs from 'fs/promises';
-import path from 'path';
-
-const BANNER_UPLOAD_PATH = path.join(process.cwd(), 'public/uploads/banners');
+import path from 'path'; // path sigue siendo útil para path.join
+import { getUploadsSubfolderPath } from '../../../config/paths.config';
 
 /**
  * Fachada para la gestión del banner principal.
@@ -119,7 +118,10 @@ class BannerFacade implements IBannerFacade {
 
         // 2. Eliminar la imagen anterior si existe (para no acumular archivos)
         if (imageUrl) {
-          const oldImagePath = path.join(BANNER_UPLOAD_PATH, imageUrl);
+          const oldImagePath = path.join(
+            getUploadsSubfolderPath('banners'),
+            imageUrl,
+          );
           await fs
             .unlink(oldImagePath)
             .catch((err) =>
@@ -203,7 +205,7 @@ class BannerFacade implements IBannerFacade {
       // Si el banner tiene una imagen, la eliminamos del sistema de archivos
       if (existingBanner?.imageUrl) {
         const imagePath = path.join(
-          BANNER_UPLOAD_PATH,
+          getUploadsSubfolderPath('banners'),
           existingBanner.imageUrl,
         );
         await fs

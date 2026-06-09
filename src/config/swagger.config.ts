@@ -20,7 +20,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:4000',
+        url: process.env.APP_URL || 'http://localhost:4000',
         description: 'Servidor de desarrollo',
       },
     ],
@@ -88,7 +88,13 @@ const options: swaggerJsdoc.Options = {
                     type: 'array',
                     items: { type: 'object' },
                     example: [
-                      { type: 'field', value: '', msg: 'El título es requerido', path: 'title', location: 'body' },
+                      {
+                        type: 'field',
+                        value: '',
+                        msg: 'El título es requerido',
+                        path: 'title',
+                        location: 'body',
+                      },
                     ],
                   },
                 },
@@ -97,7 +103,8 @@ const options: swaggerJsdoc.Options = {
           },
         },
         ForbiddenError: {
-          description: 'El cliente no tiene permisos para realizar esta acción.',
+          description:
+            'El cliente no tiene permisos para realizar esta acción.',
           content: {
             'application/json': {
               schema: {

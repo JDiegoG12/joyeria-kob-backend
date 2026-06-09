@@ -8,11 +8,10 @@ import {
   ProductStatus,
 } from '../models/product-types';
 import { calculateSuggestedPrice } from '../../../shared/utils/price-calculator';
-import { processAndSaveImage } from '../../../shared/utils/image.processor';
+import { processAndSaveImage } from '../../../shared/utils/image.processor'; 
 import fs from 'fs/promises';
 import path from 'path';
-
-const UPLOAD_DIR = path.join(process.cwd(), 'public/uploads/products');
+import { getUploadsSubfolderPath } from '../../../config/paths.config';
 
 export type CatalogQueryParams = {
   categoryId?: number;
@@ -322,7 +321,7 @@ export const deleteProductService = async (id: string) => {
   const images = product.images as string[];
 
   for (const imgName of images) {
-    const oldPath = path.join(UPLOAD_DIR, imgName);
+    const oldPath = path.join(getUploadsSubfolderPath('products'), imgName);
     await fs
       .unlink(oldPath)
       .catch((err) =>
@@ -391,8 +390,11 @@ export const updateProductService = async (
 
     if (imagesToDelete.length > 0) {
       for (const imgName of imagesToDelete) {
-        if (finalImages.includes(imgName)) {
-          const targetPath = path.join(UPLOAD_DIR, imgName);
+        if (finalImages.includes(imgName)) { 
+          const targetPath = path.join(
+            getUploadsSubfolderPath('products'),
+            imgName,
+          );
           await fs
             .unlink(targetPath)
             .catch((err) =>
