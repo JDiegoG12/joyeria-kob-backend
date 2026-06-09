@@ -2,10 +2,8 @@ import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
+import { getUploadsSubfolderPath } from '../../config/paths.config';
 import 'multer';
-
-// Carpeta base donde se guardarán los archivos subidos.
-const BASE_UPLOAD_PATH = path.join(process.cwd(), 'public/uploads');
 
 /**
  * Procesa una imagen, la optimiza en formato WebP y la guarda en el sistema de archivos.
@@ -22,7 +20,7 @@ export const processAndSaveImage = async (
   file: Express.Multer.File,
   subfolder: 'products' | 'banners' | 'social-content' | 'promo-banners' = 'products',
 ): Promise<string> => {
-  const uploadPath = path.join(BASE_UPLOAD_PATH, subfolder);
+  const uploadPath = getUploadsSubfolderPath(subfolder);
 
   // Asegurar que la carpeta de destino exista (si no, crearla)
   await fs.mkdir(uploadPath, { recursive: true });
@@ -56,10 +54,10 @@ export const processAndSaveImage = async (
     });
   }
 
-  // Aplicar conversión a WebP y guardar el archivo
-  await imageProcessor
-    .webp({ quality: 80 }) // Convertir a WebP con calidad del 80% (balance entre calidad y peso)
-    .toFile(filePath); // Guardar la imagen optimizada en el sistema de archivos
+  // Convertir a formato WebP con una calidad del 80% y guardar en la ruta especificada.
+  await imageProcessor.webp({ quality: 80 }).toFile(filePath);
 
-  return filename; // Retornar el nombre del archivo optimizado para guardarlo en la base de datos
-};
+  // Devolver solo el nombre del archivo, ya que la ruta completa se reconstruye
+  // en el frontend o al servir el archivo.
+  return filename;
+}

@@ -15,8 +15,7 @@ import {
 } from '../dtos/promo-banner.dto';
 import { IPromoBannerFacade } from '../ports/promo-banner.ports';
 import * as service from '../services/promo-banner.service';
-
-const UPLOAD_PATH = path.join(process.cwd(), 'public/uploads/promo-banners');
+import { getUploadsSubfolderPath } from '../../../config/paths.config';
 
 /** Tope máximo de banners de promoción (igual que el contenido social). */
 const MAX_PROMO_BANNERS = 10;
@@ -229,9 +228,7 @@ class PromoBannerFacade implements IPromoBannerFacade {
         updateDTO.title = data.title.trim() ? data.title.trim() : null;
       }
       if (data.subtitle !== undefined) {
-        updateDTO.subtitle = data.subtitle.trim()
-          ? data.subtitle.trim()
-          : null;
+        updateDTO.subtitle = data.subtitle.trim() ? data.subtitle.trim() : null;
       }
 
       // Si cambia el tipo de enlace, se recalculan los campos de destino.
@@ -256,7 +253,10 @@ class PromoBannerFacade implements IPromoBannerFacade {
       if (file) {
         const newImage = await processAndSaveImage(file, 'promo-banners');
         updateDTO.imageUrl = newImage;
-        const oldImagePath = path.join(UPLOAD_PATH, existing.imageUrl);
+        const oldImagePath = path.join(
+          getUploadsSubfolderPath('promo-banners'),
+          existing.imageUrl,
+        );
         await fs
           .unlink(oldImagePath)
           .catch((err) =>
@@ -297,7 +297,10 @@ class PromoBannerFacade implements IPromoBannerFacade {
 
       await service.deletePromoBannerAndShift(id, existing.position);
 
-      const imagePath = path.join(UPLOAD_PATH, existing.imageUrl);
+      const imagePath = path.join(
+        getUploadsSubfolderPath('promo-banners'),
+        existing.imageUrl,
+      );
       await fs
         .unlink(imagePath)
         .catch((err) =>

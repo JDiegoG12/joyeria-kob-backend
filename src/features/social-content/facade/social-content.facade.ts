@@ -12,8 +12,7 @@ import {
 import { ISocialContentFacade } from '../ports/social-content.ports';
 import * as service from '../services/social-content.service';
 import { SocialContent } from '@prisma/client';
-
-const UPLOAD_PATH = path.join(process.cwd(), 'public/uploads/social-content');
+import { getUploadsSubfolderPath } from '../../../config/paths.config';
 
 class SocialContentFacade implements ISocialContentFacade {
   private mapToGetResponseDTO(
@@ -142,7 +141,10 @@ class SocialContentFacade implements ISocialContentFacade {
       let newImageUrl = existingContent.imageUrl;
       if (file) {
         newImageUrl = await processAndSaveImage(file, 'social-content');
-        const oldImagePath = path.join(UPLOAD_PATH, existingContent.imageUrl);
+        const oldImagePath = path.join(
+          getUploadsSubfolderPath('social-content'),
+          existingContent.imageUrl,
+        );
         await fs
           .unlink(oldImagePath)
           .catch((err) =>
@@ -187,7 +189,10 @@ class SocialContentFacade implements ISocialContentFacade {
 
       await service.deleteSocialContent(id);
 
-      const imagePath = path.join(UPLOAD_PATH, existingContent.imageUrl);
+      const imagePath = path.join(
+        getUploadsSubfolderPath('social-content'),
+        existingContent.imageUrl,
+      );
       await fs
         .unlink(imagePath)
         .catch((err) =>

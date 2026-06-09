@@ -13,17 +13,23 @@ import socialContentRouter from '../features/social-content/routes';
 import promoBannerRouter from '../features/promo-banners/routes';
 import favoriteRouter from '../features/favorites/routes';
 import { globalErrorHandler } from './middlewares/error-handler.middleware';
-import path from 'path';
+import { UPLOADS_PATH } from '../config/paths.config';
 import cors from 'cors';
 /**
  * Instancia principal de la aplicación Express para la Joyería KOB.
  */
 const app: Application = express();
-//esto es pa que el cors del frontend no de problemas
-// Orígenes permitidos: con y sin www
-const allowedOrigins = process.env.FRONTEND_URL
+
+// --- CONFIGURACIÓN DE CORS ---
+// Orígenes permitidos leídos desde las variables de entorno.
+const frontendOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(',').map((url) => url.trim())
   : [];
+
+// Añadimos la URL del propio backend para permitir peticiones desde Swagger UI.
+const selfOrigin =
+  process.env.APP_URL || `http://localhost:${process.env.PORT || 4000}`;
+const allowedOrigins = [...frontendOrigins, selfOrigin];
 
 app.use(
   cors({
@@ -91,7 +97,9 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // Middleware para servir archivos estáticos (imágenes)
-app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
+// La URL pública sigue siendo /uploads, pero el origen físico ahora es dinámico
+// y se lee desde nuestra configuración centralizada.
+app.use('/uploads', express.static(UPLOADS_PATH));
 
 // --- MANEJO DE ERRORES ---
 // Este DEBE ser el último middleware que se registra para atrapar errores
