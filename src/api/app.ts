@@ -2,12 +2,50 @@ import express, { Application, Request, Response } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from '../config/swagger.config';
 import productRouter from '../features/products/routes';
-
+import authRouter from '../features/users/routes';
+import customerRouter from '../features/users/customer.routes';
+import adminRouter from '../features/admin/routes';
+import systemRouter from '../features/system/routes';
+import categoryRouter from '../features/categories/routes';
+import bannerRouter from '../features/banners/routes';
+import featuredProductRouter from '../features/featured-products/routes';
+import socialContentRouter from '../features/social-content/routes';
+import promoBannerRouter from '../features/promo-banners/routes';
+import favoriteRouter from '../features/favorites/routes';
+import { globalErrorHandler } from './middlewares/error-handler.middleware';
+import { UPLOADS_PATH } from '../config/paths.config';
+import cors from 'cors';
 /**
  * Instancia principal de la aplicación Express para la Joyería KOB.
  */
 const app: Application = express();
 
+// --- CONFIGURACIÓN DE CORS ---
+// Orígenes permitidos leídos desde las variables de entorno.
+const frontendOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map((url) => url.trim())
+  : [];
+
+// Añadimos la URL del propio backend para permitir peticiones desde Swagger UI.
+const selfOrigin =
+  process.env.APP_URL || `http://localhost:${process.env.PORT || 4000}`;
+const allowedOrigins = [...frontendOrigins, selfOrigin];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Permite llamadas sin origin (Postman, mobile apps, SSR)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origen no permitido por CORS: ${origin}`));
+      }
+    },
+    credentials: true,
+  }),
+);
 // Middlewares base para entender JSON
 app.use(express.json());
 
@@ -16,6 +54,17 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Rutas de la API
 app.use('/api/products', productRouter);
+app.use('/api/categories', categoryRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/system', systemRouter);
+app.use('/api/users', authRouter); // Para /users/me
+app.use('/api/users', customerRouter); // Endpoints admin de clientes (GET /, /:id/favorites)
+app.use('/api/banner', bannerRouter);
+app.use('/api/featured-products', featuredProductRouter);
+app.use('/api/social-contents', socialContentRouter);
+app.use('/api/promo-banners', promoBannerRouter);
+app.use('/api/favorites', favoriteRouter);
 
 /**
  * @openapi
@@ -41,10 +90,20 @@ app.use('/api/products', productRouter);
  *                   example: API de Joyería KOB funcionando correctamente
  */
 app.get('/', (req: Request, res: Response) => {
-    res.json({
-        success: true,
-        message: 'API de Joyería KOB funcionando correctamente 💎',
-    });
+  res.json({
+    success: true,
+    message: 'API de Joyería KOB funcionando correctamente 💎',
+  });
 });
+
+// Middleware para servir archivos estáticos (imágenes)
+// La URL pública sigue siendo /uploads, pero el origen físico ahora es dinámico
+// y se lee desde nuestra configuración centralizada.
+app.use('/uploads', express.static(UPLOADS_PATH));
+
+// --- MANEJO DE ERRORES ---
+// Este DEBE ser el último middleware que se registra para atrapar errores
+// de todas las rutas y middlewares anteriores.
+app.use(globalErrorHandler);
 
 export default app;

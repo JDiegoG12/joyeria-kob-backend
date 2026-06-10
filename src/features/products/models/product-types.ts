@@ -1,0 +1,69 @@
+/**
+ * Estado de disponibilidad de un producto en el catálogo.
+ */
+export type ProductStatus = 'AVAILABLE' | 'OUT_OF_STOCK' | 'HIDDEN';
+
+/**
+ * Estructura del JSON flexible que describe los atributos variables de una joya
+ * (si requiere talla, tallas disponibles, presencia y tipo de piedras, etc.).
+ */
+export interface IJewelSpecifications {
+  requiresSize: boolean;
+  availableSizes?: number[];
+  hasStones: boolean;
+  stoneType?: string;
+  isConfigurable?: boolean;
+}
+
+/**
+ * 1. Definición de la base del producto
+ */
+export interface IProductBase {
+  categoryId: number;
+  name: string;
+  description: string;
+  baseWeight: number;
+  additionalValue: number;
+  stock: number;
+  specifications: IJewelSpecifications;
+}
+
+/**
+ * 2. DTO de creación, lo esperado en el body para crear un producto.
+ */
+export interface ICreateProductDTO extends IProductBase {
+  images: string[]; // URLs de las imágenes procesadas
+}
+
+/**
+ * 3. DTO de Actualización (Interno/Clean).
+ * Usamos "Partial" para hacer que todos los campos del Create sean opcionales
+ * y le agregamos el status.
+ */
+export type IUpdateProductDTO = Partial<ICreateProductDTO> & {
+  status?: ProductStatus;
+  imagesToDelete?: string[]; // Imágenes a borrar del almacenamiento y la BD
+  discountValue?: number; // Descuento fijo en COP. 0 = sin descuento.
+};
+
+/**
+ * 4. Tipos Mapeados (Mapped Types) para el Form Data (Raw)
+ * Este tipo genérico convierte todas las propiedades de cualquier interfaz a `string`.
+ */
+export type IRawInput<T> = {
+  [P in keyof T]: string;
+};
+
+/**
+ * Representa los datos que recibimos del formulario para crear un producto (todos como string).
+ */
+export type IProductCreateRaw = IRawInput<Omit<ICreateProductDTO, 'images'>>;
+
+/**
+ * Representa los datos que recibimos del formulario para actualizar un producto (todos como string).
+ */
+export type IProductUpdateRaw = Partial<IProductCreateRaw> & {
+  status?: string; // El status también viene como string
+  imagesToDelete?: string; // Llega como string desde el FormData (ej: '["img1.webp", "img2.webp"]')
+  discountValue?: string; // Descuento en COP, llega como string desde el FormData.
+};

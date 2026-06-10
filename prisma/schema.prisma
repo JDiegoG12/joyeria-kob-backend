@@ -1,0 +1,240 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DB_URL")
+}
+
+// ------------------------------
+// Enums
+// ------------------------------
+enum ProductStatus {
+  AVAILABLE
+  OUT_OF_STOCK
+  HIDDEN
+}
+
+enum SocialNetwork {
+  YOUTUBE
+  TIKTOK
+  INSTAGRAM
+  FACEBOOK
+  OTHER
+}
+
+// Destino al que apunta un banner de promoción del carrusel.
+// PRODUCT   → abre el detalle de un producto en el catálogo.
+// CATEGORY  → filtra el catálogo por una categoría.
+// NONE      → banner puramente informativo, sin navegación.
+enum PromoLinkType {
+  PRODUCT
+  CATEGORY
+  NONE
+}
+
+// ------------------------------
+// Modelo: Category (Categorías con autorelación)
+// ------------------------------
+// Permite crear jerarquías de categorías (categorías padre → subcategorías)
+// - Una categoría puede tener muchas subcategorías (relación uno a muchos consigo misma)
+// - parentId es opcional (NULL para categorías raíz)
+// - onDelete: Restrict impide eliminar una categoría que tenga subcategorías asociadas
+// - Se mantiene la integridad referencial sin borrados en cascada no deseados
+// ------------------------------
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(50) 
+  slug        String   @unique @db.VarChar(50) 
+  description String?  @db.Text               
+  parentId    Int?                            
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  parent   Category?  @relation("CategoryToSubcategory", fields: [parentId], references: [id], onDelete: Restrict)
+  children Category[] @relation("CategoryToSubcategory")
+  products Product[]  // Relación: Una categoría puede tener muchos productos
+
+  // Índices para mejorar rendimiento en consultas jerárquicas
+  @@index([parentId])
+  @@unique([parentId, name], name: "unique_parent_name") 
+  @@map("categories")
+}
+
+// ------------------------------
+// Modelo: Product (Catálogo de Joyas)
+// ------------------------------
+// Implementa el patrón Híbrido: Columnas tipadas para el negocio + JSON para la flexibilidad
+// - id: Usa UUID para mayor seguridad en el frontend
+// - categoryId: Apunta siempre a la categoría/subcategoría más específica
+// - specifications: JSONB que varía según el tipo de joya (tallas, piedras, etc)
+// ------------------------------
+model Product {
+  id              String        @id @default(uuid()) @db.Char(36)
+  categoryId      Int           @map("category_id")
+  name            String        @db.VarChar(100)
+  description     String        @db.Text
+  baseWeight      Decimal       @db.Decimal(10, 2) @map("base_weight")
+  additionalValue Decimal       @db.Decimal(10, 2) @default(0) @map("additional_value")
+  discountValue   Decimal       @db.Decimal(10, 2) @default(0) @map("discount_value")
+  stock           Int           @default(1)
+  status          ProductStatus @default(AVAILABLE)
+  featured        FeaturedProduct? // Relación opcional con FeaturedProduct 
+
+  // Columnas flexibles nativas de MySQL JSON
+  specifications  Json          
+  images          Json          
+  
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  // Relación con Categoría
+  // Restrict: Evita borrar una categoría si tiene productos asignados
+  category        Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  favorites       Favorite[]
+
+  @@index([categoryId])
+  @@index([status]) // Índice útil para filtrar en el catálogo del cliente
+  @@map("products")
+}
+
+// ------------------------------
+// Modelo: FeaturedProduct (Productos Destacados)
+// ------------------------------
+// Almacena productos destacados para la página principal.
+// --------------------------------
+model FeaturedProduct {
+  id        Int     @id @default(autoincrement())
+  productId String  @unique @map("product_id") @db.Char(36) // Unique garantiza que no haya duplicados (Criterio 3)
+  position  Int     // Guardará el orden (1 al 6) (Criterio 4)
+  
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([position])
+  @@map("featured_products")
+}
+
+// ------------------------------
+// Modelo: SystemSetting (Configuraciones Globales)
+// ------------------------------
+// Almacena variables críticas del sistema (Ej: Precio del oro)
+// ------------------------------
+model SystemSetting {
+  id               Int      @id @default(autoincrement())
+  goldPricePerGram Decimal  @db.Decimal(10, 2) @map("gold_price_per_gram")
+  lastUpdate       DateTime @updatedAt @map("last_update")
+  
+  @@map("system_settings")
+}
+
+// Modelo: GoldPriceHistory (Historial inmutable)
+// ------------------------------
+// Almacena cada cambio de precio para métricas y auditoría.
+// ------------------------------
+model GoldPriceHistory {
+  id               Int      @id @default(autoincrement())
+  goldPricePerGram Decimal  @db.Decimal(10, 2) @map("gold_price_per_gram")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt]) // Índice VITAL para ordenar métricas por fecha rápidamente
+  @@map("gold_price_history")
+}
+
+enum UserRole {
+  CLIENT
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Char(36)
+  name      String @default("")
+  lastName  String @default("")
+  phone     String?  // Opcional
+  email     String   @unique
+  password  String
+  role      UserRole @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  favorites Favorite[]
+  @@map("user")
+}
+
+// ------------------------------
+// Modelo: Favorite (Carrito de Intereses / Wishlist)
+// ------------------------------
+// Tabla pivote que relaciona Usuarios con Productos.
+// Regla: Un usuario solo puede tener una vez un producto en favoritos (Unique).
+// ------------------------------
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id") @db.Char(36) // Asegúrate de que el tipo coincida con el ID de tu tabla User
+  productId String   @map("product_id") @db.Char(36)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Unicidad: El usuario no puede agregar el mismo producto dos veces
+  @@unique([userId, productId], name: "unique_user_product")
+  @@map("favorites")
+}
+
+
+
+model Banner {
+  id        Int      @id @default(1)
+  title     String
+  subtitle  String?
+  imageUrl  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("banner")
+}
+
+// ------------------------------
+// Modelo: PromoBanner (Banners de promoción del carrusel)
+// ------------------------------
+// Imágenes adicionales del carrusel hero de la home, mostradas SIEMPRE después
+// del banner principal. Cada una puede enlazar a un producto, una categoría o a
+// nada. El orden lo define `position` (gestionado manualmente desde el admin).
+// No se usan FKs duras hacia Product/Category: la existencia del destino se
+// valida en el servicio al crear/editar, evitando bloquear borrados.
+// ------------------------------
+model PromoBanner {
+  id             Int           @id @default(autoincrement())
+  title          String?       @db.VarChar(120)
+  subtitle       String?       @db.VarChar(200)
+  imageUrl       String        @map("image_url")
+  position       Int
+  linkType       PromoLinkType @default(NONE) @map("link_type")
+  linkProductId  String?       @map("link_product_id") @db.Char(36)
+  linkCategoryId Int?          @map("link_category_id")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  @@unique([position])
+  @@map("promo_banners")
+}
+
+// ------------------------------
+// Modelo: SocialContent (Contenido para Redes Sociales)
+// ------------------------------
+// Almacena tarjetas de contenido para mostrar en el frontend,
+// enlazando a publicaciones de redes sociales.
+// ------------------------------
+model SocialContent {
+  id            Int           @id @default(autoincrement())
+  title         String        @db.VarChar(100)
+  imageUrl      String        @map("image_url")
+  link          String        @db.Text
+  socialNetwork SocialNetwork @map("social_network")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  @@index([socialNetwork])
+  @@map("social_contents")
+}
