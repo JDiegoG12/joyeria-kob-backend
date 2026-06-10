@@ -5,6 +5,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { getUploadsSubfolderPath } from '../../config/paths.config';
 import 'multer';
 
+// --- Configuración de sharp para hosting compartido (CloudLinux) ---
+// El servidor reporta los núcleos del host (no nuestra cuota real de ~1 núcleo), así que
+// por defecto libvips crearía un pool de hilos = nº de CPUs del host (decenas). En
+// CloudLinux cada hilo cuenta como un proceso ("Max Processes"), por lo que una sola
+// subida de imagen del admin podría disparar el límite. Limitamos la concurrencia a 1
+// hilo y desactivamos la caché de libvips para minimizar hilos/memoria por operación.
+sharp.concurrency(1);
+sharp.cache(false);
+
 /**
  * Procesa una imagen, la optimiza en formato WebP y la guarda en el sistema de archivos.
  * La resolución de salida depende de la subcarpeta:
