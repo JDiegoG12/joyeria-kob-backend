@@ -12,8 +12,13 @@ import {
 } from '../services/featured-product.service';
 import { ReorderFeaturedProductsDto } from '../dtos/featured-product.dto';
 
+/** Forma mínima de un error originado en la capa de servicio. */
 type ServiceError = { code?: string; status?: number; message?: string };
 
+/**
+ * Convierte un error de la capa de servicio en un `FacadeResult` de fallo,
+ * aplicando valores por defecto cuando faltan código o estado.
+ */
 const normalizeServiceError = <T>(
   error: unknown,
   fallbackMessage: string,
@@ -27,7 +32,12 @@ const normalizeServiceError = <T>(
   };
 };
 
+/**
+ * Fachada de productos destacados: orquesta los servicios y unifica las
+ * respuestas en el formato `FacadeResult`, normalizando los errores.
+ */
 class FeaturedProductFacade implements IFeaturedProductFacade {
+  /** Obtiene los productos destacados ordenados, con su precio calculado. */
   async getFeaturedProducts(): Promise<
     FacadeResult<FeaturedProductWithPrice[]>
   > {
@@ -51,6 +61,7 @@ class FeaturedProductFacade implements IFeaturedProductFacade {
     }
   }
 
+  /** Agrega un producto a la lista de destacados. */
   async addFeaturedProduct(
     productId: string,
   ): Promise<FacadeResult<FeaturedProductWithPrice>> {
@@ -71,6 +82,7 @@ class FeaturedProductFacade implements IFeaturedProductFacade {
     }
   }
 
+  /** Quita un producto de los destacados y compacta las posiciones. */
   async removeFeaturedProduct(productId: string): Promise<FacadeResult<null>> {
     try {
       await removeFeaturedProductService(productId);
@@ -92,6 +104,7 @@ class FeaturedProductFacade implements IFeaturedProductFacade {
     }
   }
 
+  /** Reordena por completo la lista de productos destacados. */
   async reorderFeaturedProducts(
     items: ReorderFeaturedProductsDto,
   ): Promise<FacadeResult<FeaturedProductWithPrice[]>> {

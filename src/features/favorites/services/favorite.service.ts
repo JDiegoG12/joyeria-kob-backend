@@ -12,11 +12,24 @@ type FavoriteWithProductPayload = Prisma.FavoriteGetPayload<{
   };
 }>;
 
+/**
+ * Obtiene el precio actual del oro por gramo desde la configuración del sistema.
+ * Si no hay configuración registrada, usa el valor por defecto.
+ *
+ * @returns Precio del oro por gramo a usar en el cálculo de precios.
+ */
 const getGoldPrice = async (): Promise<number> => {
   const settings = await prisma.systemSetting.findUnique({ where: { id: 1 } });
   return settings?.goldPricePerGram.toNumber() ?? DEFAULT_GOLD_PRICE;
 };
 
+/**
+ * Enriquece un favorito con el precio calculado y el precio final de su producto.
+ *
+ * @param favorite - Favorito con el producto y su categoría incluidos.
+ * @param goldPrice - Precio del oro por gramo usado en el cálculo.
+ * @returns El favorito con `calculatedPrice`, `discountValue` y `finalPrice`.
+ */
 const mapFavoriteWithPrice = (
   favorite: FavoriteWithProductPayload,
   goldPrice: number,
@@ -74,6 +87,19 @@ export const getUserFavoritesService = async (
   return favorites.map((favorite) => mapFavoriteWithPrice(favorite, goldPrice));
 };
 
+/**
+ * Agrega un producto a los favoritos de un usuario.
+ *
+ * Valida que el producto exista y esté disponible, y que no esté ya en los
+ * favoritos del usuario (controlando también la colisión por la restricción
+ * única a nivel de base de datos).
+ *
+ * @param userId - ID del usuario.
+ * @param productId - ID del producto a marcar como favorito.
+ * @returns El favorito recién creado.
+ * @throws Un error de negocio con `code`/`status`/`message` si el producto no
+ *   existe (404), no está disponible (400) o ya es favorito (409).
+ */
 export const addFavoriteService = async (userId: string, productId: string) => {
   const product = await prisma.product.findUnique({ where: { id: productId } });
 
@@ -124,6 +150,14 @@ export const addFavoriteService = async (userId: string, productId: string) => {
   }
 };
 
+/**
+ * Elimina un producto de los favoritos de un usuario.
+ *
+ * @param userId - ID del usuario.
+ * @param productId - ID del producto a quitar de favoritos.
+ * @returns `true` si la eliminación fue exitosa.
+ * @throws Un error de negocio (404) si el producto no estaba en los favoritos.
+ */
 export const removeFavoriteService = async (
   userId: string,
   productId: string,

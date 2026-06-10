@@ -20,15 +20,21 @@ export type FacadeResult<T = unknown> = {
  * El controlador dependerá de esta abstracción, no de una implementación concreta.
  */
 export interface ICategoryFacade {
+  /** Obtiene todas las categorías con sus relaciones (padre e hijos). */
   getAllCategories(): Promise<FacadeResult<CategoryWithRelations[]>>;
+  /** Obtiene una categoría por su ID. */
   getCategoryById(id: number): Promise<FacadeResult<CategoryWithRelations>>;
+  /** Obtiene las subcategorías directas de una categoría padre. */
   getCategoryChildren(
     id: number,
   ): Promise<FacadeResult<CategoryWithRelations[]>>;
+  /** Crea una categoría validando jerarquía y unicidad de nombre. */
   createCategory(data: CreateCategoryDto): Promise<FacadeResult<Category>>;
+  /** Actualiza una categoría validando jerarquía, ciclos y unicidad. */
   updateCategory(
     id: number,
     data: UpdateCategoryDto,
   ): Promise<FacadeResult<CategoryWithRelations>>;
+  /** Elimina una categoría si no tiene subcategorías ni productos asociados. */
   deleteCategory(id: number): Promise<FacadeResult<{ message: string }>>;
 }

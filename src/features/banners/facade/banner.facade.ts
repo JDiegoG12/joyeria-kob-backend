@@ -25,11 +25,8 @@ import { getUploadsSubfolderPath } from '../../../config/paths.config';
  * - Manejar la eliminación de imágenes antiguas al actualizar.
  * - Validar que siempre exista al menos una imagen configurada.
  *
- * Cambios realizados (ACTUALIZACIÓN):
- * -  La imagen ahora es OPCIONAL en updateBanner.
- * -  Permite actualizar solo el texto sin subir nueva imagen.
- * -  Si no se proporciona archivo, conserva la imagen existente.
- * -  Solo procesa y guarda nueva imagen si se sube un archivo.
+ * En la actualización la imagen es opcional: permite modificar solo el texto y,
+ * si no se envía un archivo, conserva la imagen existente.
  */
 class BannerFacade implements IBannerFacade {
   /**
@@ -74,16 +71,14 @@ class BannerFacade implements IBannerFacade {
   /**
    * Crea o actualiza el banner principal (operación upsert).
    *
-   * CAMBIOS IMPORTANTES:
-   * - La imagen es ahora OPCIONAL.
-   * - Si no se proporciona `file`, se conserva la imagen existente.
-   * - Permite actualizar solo el texto sin necesidad de subir imagen.
-   * - Si se proporciona una nueva imagen, reemplaza a la anterior.
+   * La imagen es opcional: si no se proporciona `file`, se conserva la imagen
+   * existente, lo que permite actualizar solo el texto. Si se envía una nueva
+   * imagen, reemplaza a la anterior.
    *
    * @param data - Datos del banner (title, subtitle). Ambos son opcionales.
    * @param file - Archivo de imagen opcional. Si es undefined, se mantiene la imagen actual.
    * @returns El banner actualizado con la nueva configuración.
-   * @returns 500 si no se puede determinar una imagen (ni nueva ni existente).
+   *   Devuelve un error 500 si no se puede determinar una imagen (ni nueva ni existente).
    *
    * @example
    * // Actualizar solo texto (sin cambiar imagen):
@@ -101,10 +96,6 @@ class BannerFacade implements IBannerFacade {
     data: UpdateBannerRequestDto,
     file?: Express.Multer.File,
   ): Promise<FacadeResult<BannerResponseDto>> {
-    // VALIDACIÓN CORREGIDA: La imagen ya NO es obligatoria
-    // Se eliminó el bloqueo: if (!file) { return error 400 }
-    // Ahora permitimos que file sea undefined para actualizar solo texto.
-
     const existingBanner = await findBanner();
 
     try {

@@ -36,6 +36,7 @@ export class AuthResponseDTO {
   }
 }
 
+/** DTO de entrada para el registro de un nuevo usuario. */
 export interface RegisterRequestDTO {
   name: string;
   lastName: string;
@@ -44,6 +45,11 @@ export interface RegisterRequestDTO {
   phone?: string;
 }
 
+/**
+ * DTO de entrada para actualizar el perfil propio.
+ * Todos los campos son opcionales; `currentPassword` solo es necesario cuando se
+ * envía `newPassword`.
+ */
 export interface UpdateProfileRequestDTO {
   name?: string;
   lastName?: string;
@@ -52,4 +58,6 @@ export interface UpdateProfileRequestDTO {
   currentPassword?: string;
   newPassword?: string;
 }
+
+/** DTO de entrada para el inicio de sesión (email y contraseña). */
 export type LoginRequestDTO = Pick<User, 'email' | 'password'>;

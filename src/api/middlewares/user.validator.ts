@@ -3,6 +3,10 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../../config/prisma';
 import { AuthenticatedRequest } from './auth.middleware';
 
+/**
+ * Recoge el resultado de las validaciones de express-validator.
+ * Si existen errores, responde con un 400 y el detalle; si no, continúa.
+ */
 const handleValidationErrors = (
   req: Request,
   res: Response,
@@ -20,6 +24,14 @@ const handleValidationErrors = (
   next();
 };
 
+/**
+ * Cadena de validación para la actualización del perfil del usuario autenticado.
+ *
+ * Todos los campos son opcionales para permitir actualizaciones parciales:
+ * - Valida que nombre y apellido, si se envían, no queden vacíos.
+ * - Comprueba que el nuevo email tenga formato válido y no esté en uso por otro usuario.
+ * - Exige `currentPassword` únicamente cuando se intenta establecer una `newPassword`.
+ */
 export const updateProfileValidator = [
   body('name')
     .optional()

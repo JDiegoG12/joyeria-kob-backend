@@ -1,7 +1,11 @@
 import { body, validationResult } from 'express-validator';
 import { Request, Response, NextFunction } from 'express';
 
-// Middleware para manejar los resultados de la validación
+/**
+ * Recoge el resultado de las validaciones de express-validator.
+ * Si existen errores, responde con un 400 y el detalle; si no, continúa
+ * hacia el siguiente middleware o controlador.
+ */
 const handleValidationErrors = (
   req: Request,
   res: Response,
@@ -19,7 +23,11 @@ const handleValidationErrors = (
   next();
 };
 
-// Cadena de validación para el registro de usuarios
+/**
+ * Cadena de validación para el registro de usuarios.
+ * Verifica nombre, apellido, email (formato y longitud), contraseña
+ * (longitud mínima y máxima) y un teléfono opcional.
+ */
 export const registerValidator = [
   body('name').trim().notEmpty().withMessage('El nombre es requerido.'),
   body('lastName').trim().notEmpty().withMessage('El apellido es requerido.'),
@@ -35,7 +43,10 @@ export const registerValidator = [
   handleValidationErrors,
 ];
 
-// Cadena de validación para el inicio de sesión
+/**
+ * Cadena de validación para el inicio de sesión.
+ * Exige un email con formato válido y una contraseña no vacía.
+ */
 export const loginValidator = [
   body('email').isEmail().withMessage('Debe proporcionar un email válido.'),
   body('password').notEmpty().withMessage('La contraseña es requerida.'),

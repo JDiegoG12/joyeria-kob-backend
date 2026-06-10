@@ -14,6 +14,11 @@ import { ERROR_CODES } from '../../../shared/constants/error-codes';
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-for-dev';
 const SALT_ROUNDS = 10;
 
+/**
+ * Fachada de autenticación: gestiona el registro y el inicio de sesión.
+ * Se encarga del hasheo de contraseñas (bcrypt) y de la emisión de tokens JWT,
+ * devolviendo siempre un `FacadeResult`.
+ */
 export class AuthFacade implements IAuthFacade {
   /**
    * Registra un nuevo usuario, hasheando su contraseña.

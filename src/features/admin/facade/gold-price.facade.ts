@@ -9,7 +9,20 @@ import { FacadeResult } from '../../../shared/types/facade';
 import * as systemService from '../../system/services/system.service';
 import { ERROR_CODES } from '../../../shared/constants/error-codes';
 
+/**
+ * Fachada de administración del precio del oro: valida la entrada, delega en el
+ * servicio del sistema y unifica las respuestas en el formato `FacadeResult`.
+ */
 export class GoldPriceFacade implements IGoldPriceFacade {
+  /**
+   * Actualiza el precio del oro por gramo.
+   *
+   * Valida que el valor sea un número positivo antes de persistirlo.
+   *
+   * @param data - Datos con el nuevo precio del oro.
+   * @returns Resultado con el precio actualizado, o un error de validación (400)
+   *   o interno (500).
+   */
   async updateGoldPrice(
     data: UpdateGoldPriceDTO,
   ): Promise<FacadeResult<GoldPriceResponseDTO>> {
@@ -49,6 +62,11 @@ export class GoldPriceFacade implements IGoldPriceFacade {
       };
     }
   }
+  /**
+   * Obtiene el historial de cambios del precio del oro.
+   *
+   * @returns Resultado con el listado del historial, o un error interno (500).
+   */
   async getGoldPriceHistory(): Promise<
     FacadeResult<GoldPriceHistoryResponseDTO[]>
   > {

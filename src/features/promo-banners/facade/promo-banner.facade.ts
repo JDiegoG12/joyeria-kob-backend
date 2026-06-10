@@ -28,7 +28,16 @@ type LinkFieldsResult =
   | { ok: true; linkProductId: string | null; linkCategoryId: number | null }
   | { ok: false; error: FacadeResult<never> };
 
+/**
+ * Fachada de banners de promoción: orquesta el servicio, el procesamiento de
+ * imágenes y la validación de los enlaces, y unifica las respuestas en el
+ * formato `FacadeResult`.
+ */
 class PromoBannerFacade implements IPromoBannerFacade {
+  /**
+   * Convierte una entidad en su DTO de respuesta, exponiendo la URL pública de
+   * la imagen.
+   */
   private mapToResponseDTO(banner: PromoBanner): IPromoBannerResponseDTO {
     return {
       ...banner,
@@ -100,6 +109,7 @@ class PromoBannerFacade implements IPromoBannerFacade {
     return { ok: true, linkProductId: null, linkCategoryId: null };
   }
 
+  /** Obtiene todos los banners de promoción como DTOs de respuesta. */
   async getAll(): Promise<FacadeResult<IPromoBannerResponseDTO[]>> {
     try {
       const banners = await service.findAllPromoBanners();
@@ -119,6 +129,7 @@ class PromoBannerFacade implements IPromoBannerFacade {
     }
   }
 
+  /** Obtiene un banner por su ID, o un error 404 si no existe. */
   async getById(
     id: number,
   ): Promise<FacadeResult<IPromoBannerResponseDTO | null>> {
@@ -148,6 +159,10 @@ class PromoBannerFacade implements IPromoBannerFacade {
     }
   }
 
+  /**
+   * Crea un banner de promoción: valida el tope máximo, resuelve y verifica el
+   * destino del enlace, procesa la imagen y le asigna la siguiente posición.
+   */
   async create(
     data: IPromoBannerCreateRaw,
     file: Express.Multer.File,
@@ -206,6 +221,10 @@ class PromoBannerFacade implements IPromoBannerFacade {
     }
   }
 
+  /**
+   * Actualiza un banner de promoción. Si cambia el `linkType`, recalcula los
+   * campos de destino; si llega una nueva imagen, la procesa y borra la anterior.
+   */
   async update(
     id: number,
     data: IPromoBannerUpdateRaw,
@@ -283,6 +302,10 @@ class PromoBannerFacade implements IPromoBannerFacade {
     }
   }
 
+  /**
+   * Elimina un banner de promoción, compacta las posiciones restantes y borra su
+   * imagen del sistema de archivos.
+   */
   async delete(id: number): Promise<FacadeResult<null>> {
     try {
       const existing = await service.findPromoBannerById(id);
@@ -325,6 +348,11 @@ class PromoBannerFacade implements IPromoBannerFacade {
     }
   }
 
+  /**
+   * Reordena la totalidad de los banners. Valida que no haya IDs ni posiciones
+   * duplicados, que las posiciones sean contiguas desde 1 y que se envíen todos
+   * los banners existentes.
+   */
   async reorder(
     items: IReorderPromoBannerItem[],
   ): Promise<FacadeResult<IPromoBannerResponseDTO[]>> {

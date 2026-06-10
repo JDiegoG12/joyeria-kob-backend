@@ -12,7 +12,24 @@ import { IProductStatsFacade } from '../ports/product-stats.ports';
 import { GroupedResult } from '../services/product-stats.service';
 import * as statsService from '../services/product-stats.service';
 
+/**
+ * Fachada de estadísticas de productos: aplica las reglas de visibilidad según
+ * el rol del usuario, delega las agregaciones en el servicio de estadísticas y
+ * da forma a la respuesta (totales, agrupaciones por categoría o estado).
+ */
 export class ProductStatsFacade implements IProductStatsFacade {
+  /**
+   * Obtiene estadísticas de productos.
+   *
+   * Los clientes (o usuarios anónimos) solo ven productos `AVAILABLE` y no pueden
+   * agrupar ni filtrar por estado; los administradores pueden filtrar por estado.
+   * Si se indica `categoryId`, devuelve un conteo simple incluyendo subcategorías;
+   * de lo contrario, devuelve el total y, opcionalmente, las agrupaciones.
+   *
+   * @param user - Usuario autenticado (o `undefined` para anónimo).
+   * @param query - Filtros y criterio de agrupación.
+   * @returns Resultado con las estadísticas o un error de permisos/validación.
+   */
   async getStats(
     user: TokenPayload | undefined,
     query: StatsQueryDTO,
@@ -146,6 +163,14 @@ export class ProductStatsFacade implements IProductStatsFacade {
     }
   }
 
+  /**
+   * Obtiene el top de productos más marcados como favoritos. Operación exclusiva
+   * de administradores.
+   *
+   * @param user - Usuario autenticado; debe tener rol ADMIN.
+   * @param limit - Número máximo de productos a devolver.
+   * @returns Resultado con el top de favoritos o un error 403 si no es ADMIN.
+   */
   async getTopFavoriteProducts(
     user: TokenPayload | undefined,
     limit: number,

@@ -14,7 +14,17 @@ import * as service from '../services/social-content.service';
 import { SocialContent } from '@prisma/client';
 import { getUploadsSubfolderPath } from '../../../config/paths.config';
 
+/**
+ * Fachada de contenido social: orquesta el servicio de contenido social y el
+ * procesamiento de imágenes, y unifica las respuestas en el formato
+ * `FacadeResult`. También transforma las entidades en DTOs de respuesta con la
+ * URL pública de la imagen.
+ */
 class SocialContentFacade implements ISocialContentFacade {
+  /**
+   * Convierte una entidad en su DTO de respuesta para GET/CREATE: omite
+   * `updatedAt` y expone la URL pública de la imagen.
+   */
   private mapToGetResponseDTO(
     content: SocialContent,
   ): ISocialContentGetResponseDTO {
@@ -26,6 +36,10 @@ class SocialContentFacade implements ISocialContentFacade {
     };
   }
 
+  /**
+   * Convierte una entidad en su DTO de respuesta para UPDATE: omite `createdAt`
+   * y expone la URL pública de la imagen.
+   */
   private mapToUpdateResponseDTO(
     content: SocialContent,
   ): ISocialContentUpdateResponseDTO {
@@ -37,6 +51,7 @@ class SocialContentFacade implements ISocialContentFacade {
     };
   }
 
+  /** Obtiene todos los contenidos sociales como DTOs de respuesta. */
   async getAll(): Promise<FacadeResult<ISocialContentGetResponseDTO[]>> {
     try {
       const contents = await service.findAllSocialContents();
@@ -56,6 +71,7 @@ class SocialContentFacade implements ISocialContentFacade {
     }
   }
 
+  /** Obtiene un contenido social por su ID, o un error 404 si no existe. */
   async getById(
     id: number,
   ): Promise<FacadeResult<ISocialContentGetResponseDTO | null>> {
@@ -85,6 +101,10 @@ class SocialContentFacade implements ISocialContentFacade {
     }
   }
 
+  /**
+   * Crea un contenido social: valida el límite de 10 elementos, procesa y guarda
+   * la imagen y persiste el registro.
+   */
   async create(
     data: Omit<ICreateSocialContentDTO, 'imageUrl'>,
     file: Express.Multer.File,
@@ -122,6 +142,10 @@ class SocialContentFacade implements ISocialContentFacade {
     }
   }
 
+  /**
+   * Actualiza un contenido social. Si llega una nueva imagen, la procesa y
+   * elimina la anterior del sistema de archivos.
+   */
   async update(
     id: number,
     data: IUpdateSocialContentDTO,
@@ -175,6 +199,9 @@ class SocialContentFacade implements ISocialContentFacade {
     }
   }
 
+  /**
+   * Elimina un contenido social y su imagen asociada del sistema de archivos.
+   */
   async delete(id: number): Promise<FacadeResult<null>> {
     try {
       const existingContent = await service.findSocialContentById(id);

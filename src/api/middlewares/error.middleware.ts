@@ -2,6 +2,14 @@ import { NextFunction, Request, Response } from 'express';
 import { MulterError } from 'multer';
 import { AppError } from '../../shared/constants/app-error';
 
+/**
+ * Manejador de errores de Express que traduce excepciones en respuestas JSON.
+ *
+ * Distingue tres casos:
+ * - `AppError`: usa su `status` y `code` para responder con el error de negocio.
+ * - `MulterError` de tipo `LIMIT_UNEXPECTED_FILE`: responde 400 por exceso de imágenes.
+ * - Cualquier otro error: lo registra y responde con un 500 genérico.
+ */
 export const errorHandler = (
   err: Error,
   req: Request,

@@ -7,7 +7,23 @@ import { UpdateProfileRequestDTO } from '../dtos/auth.dto';
 
 const SALT_ROUNDS = 10;
 
+/**
+ * Fachada de usuario: gestiona la actualización del perfil propio.
+ * Construye dinámicamente los campos a modificar y, para el cambio de
+ * contraseña, verifica la contraseña actual antes de aplicar la nueva.
+ */
 export class UserFacade {
+  /**
+   * Actualiza el perfil del usuario indicado.
+   *
+   * Solo modifica los campos enviados. Para cambiar la contraseña exige y valida
+   * `currentPassword` antes de hashear la `newPassword`.
+   *
+   * @param userId - ID del usuario a actualizar (proveniente del token).
+   * @param data - Campos del perfil a modificar.
+   * @returns Resultado con el usuario actualizado, o un error de validación o
+   *   de usuario no encontrado.
+   */
   async updateProfile(
     userId: string,
     data: UpdateProfileRequestDTO,

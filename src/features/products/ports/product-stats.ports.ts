@@ -7,13 +7,15 @@ import {
   TopFavoriteProductDTO,
 } from '../dtos/product-stats.dto';
 
+/** Contrato de la fachada de estadísticas de productos. */
 export interface IProductStatsFacade {
-  // Updated return type
+  /** Obtiene estadísticas de productos (totales y agrupaciones) según el rol. */
   getStats(
     user: TokenPayload,
     query: StatsQueryDTO,
   ): Promise<FacadeResult<StatsResponseDTO | CategoryStatsResponseDTO>>;
 
+  /** Obtiene el top de productos más marcados como favoritos (solo ADMIN). */
   getTopFavoriteProducts(
     user: TokenPayload | undefined,
     limit: number,

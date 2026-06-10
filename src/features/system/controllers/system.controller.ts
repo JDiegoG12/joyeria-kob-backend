@@ -3,6 +3,9 @@ import { SystemFacade } from '../facade/system.facade';
 
 const systemFacade = new SystemFacade();
 
+/**
+ * GET /api/system/gold-price — Devuelve el precio actual del oro por gramo.
+ */
 export const getCurrentGoldPriceController = async (
   req: Request,
   res: Response,

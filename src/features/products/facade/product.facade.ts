@@ -16,9 +16,19 @@ import {
 import { IProductCreateRaw, IProductUpdateRaw } from '../models/product-types';
 import { ERROR_CODES } from '../../../shared/constants/error-codes';
 
+/** Forma mínima de un error originado en la capa de servicio. */
 type ServiceError = { code?: string; status?: number; message?: string };
 
+/**
+ * Fachada de productos: orquesta los servicios del catálogo de joyas
+ * (consulta, creación, actualización y eliminación) y unifica las respuestas en
+ * el formato `FacadeResult`, mapeando los errores de negocio a códigos HTTP.
+ */
 class ProductFacade implements IProductFacade {
+  /**
+   * Obtiene el listado de productos. Según `isAdmin` se exponen o no los
+   * productos ocultos/inactivos, con filtro opcional por categoría.
+   */
   async getProducts(
     isAdmin: boolean,
     categoryId?: number,
@@ -100,6 +110,7 @@ class ProductFacade implements IProductFacade {
     }
   }
 
+  /** Obtiene un producto por su ID, o un error 404 si no existe. */
   async getProduct(
     id: string,
   ): Promise<FacadeResult<ProductWithCategoryAndPrice>> {
@@ -130,6 +141,10 @@ class ProductFacade implements IProductFacade {
     }
   }
 
+  /**
+   * Crea un producto a partir de los datos crudos del formulario y sus imágenes.
+   * Exige al menos una imagen y mapea el error de configuración de precio del oro.
+   */
   async createProduct(
     data: IProductCreateRaw,
     files: Express.Multer.File[] | undefined,
@@ -168,6 +183,7 @@ class ProductFacade implements IProductFacade {
     }
   }
 
+  /** Elimina un producto por su ID, devolviendo 404 si no existe. */
   async deleteProduct(id: string): Promise<FacadeResult<boolean>> {
     try {
       await deleteProductService(id);
@@ -199,6 +215,10 @@ class ProductFacade implements IProductFacade {
     }
   }
 
+  /**
+   * Actualiza un producto y recalcula su precio. Mapea los errores de producto
+   * no encontrado (404) y de restricción de negocio (400).
+   */
   async updateProduct(
     id: string,
     data: IProductUpdateRaw,

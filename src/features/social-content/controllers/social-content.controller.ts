@@ -7,6 +7,9 @@ import {
 } from '../dtos/social-content.dto';
 import { ERROR_CODES } from '../../../shared/constants/error-codes';
 
+/**
+ * GET /api/social-contents — Lista todos los contenidos sociales.
+ */
 export const getAllSocialContentsController = async (
   req: Request,
   res: Response,
@@ -18,6 +21,9 @@ export const getAllSocialContentsController = async (
   res.status(200).json(result);
 };
 
+/**
+ * GET /api/social-contents/:id — Obtiene un contenido social por su ID.
+ */
 export const getSocialContentByIdController = async (
   req: Request,
   res: Response,
@@ -30,6 +36,9 @@ export const getSocialContentByIdController = async (
   res.status(200).json(result);
 };
 
+/**
+ * POST /api/social-contents — Crea un contenido social. Requiere imagen.
+ */
 export const createSocialContentController = async (
   req: Request,
   res: Response,
@@ -55,6 +64,9 @@ export const createSocialContentController = async (
   res.status(201).json(result);
 };
 
+/**
+ * PUT /api/social-contents/:id — Actualiza un contenido social. Imagen opcional.
+ */
 export const updateSocialContentController = async (
   req: Request,
   res: Response,
@@ -73,6 +85,9 @@ export const updateSocialContentController = async (
   res.status(200).json(result);
 };
 
+/**
+ * DELETE /api/social-contents/:id — Elimina un contenido social.
+ */
 export const deleteSocialContentController = async (
   req: Request,
   res: Response,

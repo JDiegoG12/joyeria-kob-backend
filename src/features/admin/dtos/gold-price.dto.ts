@@ -13,10 +13,17 @@ export class GoldPriceResponseDTO {
   }
 }
 
+/**
+ * DTO de entrada para actualizar el precio del oro por gramo.
+ */
 export interface UpdateGoldPriceDTO {
   goldPricePerGram: number;
 }
 
+/**
+ * DTO de respuesta para un registro del historial de precios del oro.
+ * Expone `goldPricePerGram` como número y la fecha del registro en `date`.
+ */
 export class GoldPriceHistoryResponseDTO {
   id: number;
   goldPricePerGram: number;

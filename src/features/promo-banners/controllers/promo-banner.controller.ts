@@ -8,6 +8,9 @@ import {
 } from '../dtos/promo-banner.dto';
 import { ERROR_CODES } from '../../../shared/constants/error-codes';
 
+/**
+ * GET /api/promo-banners — Lista todos los banners de promoción.
+ */
 export const getAllPromoBannersController = async (
   req: Request,
   res: Response,
@@ -19,6 +22,9 @@ export const getAllPromoBannersController = async (
   res.status(200).json(result);
 };
 
+/**
+ * GET /api/promo-banners/:id — Obtiene un banner de promoción por su ID.
+ */
 export const getPromoBannerByIdController = async (
   req: Request,
   res: Response,
@@ -31,6 +37,9 @@ export const getPromoBannerByIdController = async (
   res.status(200).json(result);
 };
 
+/**
+ * POST /api/promo-banners — Crea un banner de promoción. Requiere imagen.
+ */
 export const createPromoBannerController = async (
   req: Request,
   res: Response,
@@ -56,6 +65,9 @@ export const createPromoBannerController = async (
   res.status(201).json(result);
 };
 
+/**
+ * PUT /api/promo-banners/:id — Actualiza un banner de promoción. Imagen opcional.
+ */
 export const updatePromoBannerController = async (
   req: Request,
   res: Response,
@@ -74,6 +86,9 @@ export const updatePromoBannerController = async (
   res.status(200).json(result);
 };
 
+/**
+ * DELETE /api/promo-banners/:id — Elimina un banner de promoción.
+ */
 export const deletePromoBannerController = async (
   req: Request,
   res: Response,
@@ -86,6 +101,10 @@ export const deletePromoBannerController = async (
   res.status(200).json(result);
 };
 
+/**
+ * PUT /api/promo-banners/reorder — Reordena los banners. Recibe `items` con el
+ * id y la nueva posición de cada banner, normalizando los valores numéricos.
+ */
 export const reorderPromoBannersController = async (
   req: Request,
   res: Response,

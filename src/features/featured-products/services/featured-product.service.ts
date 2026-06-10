@@ -12,11 +12,22 @@ type FeaturedProductWithProduct = Prisma.FeaturedProductGetPayload<{
   include: { product: true };
 }>;
 
+/**
+ * Obtiene el precio actual del oro por gramo desde la configuración del sistema,
+ * o el valor por defecto si no hay configuración registrada.
+ */
 const getGoldPrice = async (): Promise<number> => {
   const settings = await prisma.systemSetting.findUnique({ where: { id: 1 } });
   return settings?.goldPricePerGram.toNumber() ?? DEFAULT_GOLD_PRICE;
 };
 
+/**
+ * Enriquece un producto destacado con el precio calculado y el precio final.
+ *
+ * @param item - Producto destacado con su producto incluido.
+ * @param goldPrice - Precio del oro por gramo usado en el cálculo.
+ * @returns El destacado con `calculatedPrice`, `discountValue` y `finalPrice`.
+ */
 const mapFeaturedWithPrice = (
   item: FeaturedProductWithProduct,
   goldPrice: number,
@@ -38,17 +49,29 @@ const mapFeaturedWithPrice = (
   };
 };
 
+/** Devuelve el conjunto de posiciones presentes en la solicitud de reorden. */
 const getPositionSet = (items: ReorderFeaturedProductsDto) =>
   new Set(items.map((item) => item.position));
 
+/** Devuelve el conjunto de productIds presentes en la solicitud de reorden. */
 const getProductIdSet = (items: ReorderFeaturedProductsDto) =>
   new Set(items.map((item) => item.productId));
 
+/**
+ * Comprueba que las posiciones formen una secuencia contigua iniciando en 1
+ * (1, 2, 3, ...), sin huecos ni repeticiones.
+ */
 const arePositionsContiguous = (items: ReorderFeaturedProductsDto): boolean => {
   const sorted = [...items].map((item) => item.position).sort((a, b) => a - b);
   return sorted.every((value, index) => value === index + 1);
 };
 
+/**
+ * Obtiene los productos destacados ordenados por posición, cada uno con su
+ * precio calculado.
+ *
+ * @returns Lista de productos destacados con precios, o un arreglo vacío.
+ */
 export const getFeaturedProductsService = async (): Promise<
   FeaturedProductWithPrice[]
 > => {
@@ -65,6 +88,18 @@ export const getFeaturedProductsService = async (): Promise<
   return featuredProducts.map((item) => mapFeaturedWithPrice(item, goldPrice));
 };
 
+/**
+ * Agrega un producto a la lista de destacados, asignándole la siguiente posición
+ * libre.
+ *
+ * Valida que el producto exista y esté disponible, que no esté ya destacado y
+ * que no se supere el máximo permitido (6).
+ *
+ * @param productId - ID del producto a destacar.
+ * @returns El producto destacado creado, con su precio calculado.
+ * @throws Un error de negocio si el producto no existe (404), no está disponible
+ *   (400), ya está destacado (409) o se alcanzó el límite (400).
+ */
 export const addFeaturedProductService = async (
   productId: string,
 ): Promise<FeaturedProductWithPrice> => {
@@ -129,6 +164,13 @@ export const addFeaturedProductService = async (
   return mapFeaturedWithPrice(created, goldPrice);
 };
 
+/**
+ * Quita un producto de los destacados y compacta las posiciones de los
+ * restantes para que no queden huecos. Toda la operación es transaccional.
+ *
+ * @param productId - ID del producto destacado a eliminar.
+ * @throws Un error de negocio (404) si el producto no estaba destacado.
+ */
 export const removeFeaturedProductService = async (
   productId: string,
 ): Promise<void> => {
@@ -162,6 +204,19 @@ export const removeFeaturedProductService = async (
   });
 };
 
+/**
+ * Reordena por completo la lista de productos destacados.
+ *
+ * Valida que no haya productIds ni posiciones duplicados, que las posiciones
+ * sean contiguas desde 1, que se envíen todos los destacados existentes y que
+ * todos los productos referenciados existan. La reasignación se hace en dos
+ * pasos dentro de una transacción (posiciones negativas temporales) para no
+ * violar la restricción de posición única.
+ *
+ * @param items - Lista completa de destacados con su nueva posición.
+ * @returns La lista de destacados ya reordenada, con precios calculados.
+ * @throws Un error de validación (400) o de no encontrado (404) según el caso.
+ */
 export const reorderFeaturedProductsService = async (
   items: ReorderFeaturedProductsDto,
 ): Promise<FeaturedProductWithPrice[]> => {

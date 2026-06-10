@@ -2,13 +2,17 @@ import { Prisma, ProductStatus } from '@prisma/client';
 import { prisma } from '../../../config/prisma';
 import { TopFavoriteProductDTO } from '../dtos/product-stats.dto';
 
+/**
+ * Parámetros para consultar estadísticas de productos.
+ * `categoryIds` admite varios IDs para incluir una categoría y sus descendientes.
+ */
 export interface StatsParams {
   statusFilter: ProductStatus[];
   groupBy?: 'categoryId' | 'status';
-  categoryIds?: number[]; // Cambiado a un array para soportar múltiples IDs (categoría y sus descendientes)
+  categoryIds?: number[];
 }
 
-// Define las interfaces para los resultados agrupados y el resultado total del servicio
+/** Resultado de una agrupación: clave (categoría o estado) y su conteo. */
 export interface GroupedResult {
   categoryId?: number | null;
   status?: ProductStatus | null;
@@ -17,6 +21,7 @@ export interface GroupedResult {
   };
 }
 
+/** Resultado de las estadísticas: total y, opcionalmente, los grupos. */
 export interface FetchProductStatsResult {
   total: number;
   grouped?: GroupedResult[];
@@ -114,6 +119,13 @@ export const getDescendantCategoryIds = async (
   return [...new Set(descendantIds)]; // Eliminar duplicados si los hubiera (aunque en un árbol no debería haberlos con BFS)
 };
 
+/**
+ * Obtiene los productos disponibles con más favoritos, ordenados de mayor a
+ * menor cantidad.
+ *
+ * @param limit - Número máximo de productos a devolver.
+ * @returns Lista con el id, nombre y conteo de favoritos de cada producto.
+ */
 export const getTopFavoriteProducts = async (
   limit: number,
 ): Promise<TopFavoriteProductDTO[]> => {

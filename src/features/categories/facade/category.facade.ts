@@ -39,6 +39,7 @@ const hasCyclicReference = async (
  * Cumple con el contrato definido en ICategoryFacade.
  */
 class CategoryFacade implements ICategoryFacade {
+  /** Obtiene todas las categorías con sus relaciones. */
   async getAllCategories(): Promise<FacadeResult<CategoryWithRelations[]>> {
     try {
       const categories = await getAllCategories();
@@ -59,6 +60,10 @@ class CategoryFacade implements ICategoryFacade {
     }
   }
 
+  /**
+   * Obtiene una categoría por su ID, validando que el ID sea numérico y que la
+   * categoría exista.
+   */
   async getCategoryById(
     id: number,
   ): Promise<FacadeResult<CategoryWithRelations>> {
@@ -97,6 +102,10 @@ class CategoryFacade implements ICategoryFacade {
     }
   }
 
+  /**
+   * Obtiene las subcategorías directas de una categoría padre, verificando antes
+   * que el padre exista.
+   */
   async getCategoryChildren(
     id: number,
   ): Promise<FacadeResult<CategoryWithRelations[]>> {
@@ -139,6 +148,10 @@ class CategoryFacade implements ICategoryFacade {
     }
   }
 
+  /**
+   * Crea una categoría. Normaliza y valida el `parentId`, comprueba que el padre
+   * exista, garantiza la unicidad del nombre bajo el mismo padre y genera el slug.
+   */
   async createCategory(
     data: CreateCategoryDto,
   ): Promise<FacadeResult<Category>> {
@@ -245,6 +258,11 @@ class CategoryFacade implements ICategoryFacade {
     }
   }
 
+  /**
+   * Actualiza una categoría. Valida el ID y el `parentId`, evita que sea su
+   * propio padre, controla la unicidad del nombre y detecta referencias cíclicas
+   * en la jerarquía antes de persistir.
+   */
   async updateCategory(
     id: number,
     data: UpdateCategoryDto,
@@ -427,6 +445,10 @@ class CategoryFacade implements ICategoryFacade {
     }
   }
 
+  /**
+   * Elimina una categoría. Impide el borrado si tiene subcategorías
+   * (`CATEGORY_HAS_CHILDREN`) o productos asociados (restricción `P2003`).
+   */
   async deleteCategory(id: number): Promise<FacadeResult<{ message: string }>> {
     if (Number.isNaN(id)) {
       return {

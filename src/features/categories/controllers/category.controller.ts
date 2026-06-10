@@ -8,13 +8,27 @@ import {
 import { ZodError } from 'zod';
 import { ERROR_CODES } from '../../../shared/constants/error-codes';
 
+/**
+ * Envía la respuesta HTTP a partir de un `FacadeResult`, extrayendo el `status`.
+ */
 const handleResponse = (res: Response, result: FacadeResult<unknown>) => {
   const { status, ...body } = result;
   return res.status(status).json(body);
 };
 
+/**
+ * Crea el conjunto de controladores de categorías a partir de una fachada.
+ *
+ * Recibe la fachada por inyección de dependencias para facilitar las pruebas y
+ * el desacoplamiento. Cada controlador traduce la petición HTTP en una llamada a
+ * la fachada y delega la respuesta en `handleResponse`.
+ *
+ * @param facade - Implementación de `ICategoryFacade` a utilizar.
+ * @returns Objeto con los controladores de categorías.
+ */
 export const createCategoryControllers = (facade: ICategoryFacade) => {
   return {
+    /** GET /api/categories — Lista todas las categorías. */
     getAllCategoriesController: async (
       req: Request,
       res: Response,
@@ -28,6 +42,7 @@ export const createCategoryControllers = (facade: ICategoryFacade) => {
       }
     },
 
+    /** GET /api/categories/:id — Obtiene una categoría por su ID. */
     getCategoryByIdController: async (
       req: Request,
       res: Response,
@@ -42,6 +57,7 @@ export const createCategoryControllers = (facade: ICategoryFacade) => {
       }
     },
 
+    /** GET /api/categories/:id/children — Lista las subcategorías directas. */
     getCategoryChildrenController: async (
       req: Request,
       res: Response,
@@ -56,6 +72,7 @@ export const createCategoryControllers = (facade: ICategoryFacade) => {
       }
     },
 
+    /** POST /api/categories — Crea una categoría (valida el body con Zod). */
     postCategoryController: async (
       req: Request,
       res: Response,
@@ -85,10 +102,11 @@ export const createCategoryControllers = (facade: ICategoryFacade) => {
             details: error.issues,
           });
         }
-        next(error); // Forward other errors to the global error handler
+        next(error); // Delega el resto de errores al manejador global.
       }
     },
 
+    /** PUT /api/categories/:id — Actualiza una categoría (valida el body con Zod). */
     updateCategoryController: async (
       req: Request,
       res: Response,
@@ -123,6 +141,7 @@ export const createCategoryControllers = (facade: ICategoryFacade) => {
       }
     },
 
+    /** DELETE /api/categories/:id — Elimina una categoría. */
     removeCategoryController: async (
       req: Request,
       res: Response,

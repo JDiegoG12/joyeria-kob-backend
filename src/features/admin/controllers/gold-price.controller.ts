@@ -4,6 +4,9 @@ import { UpdateGoldPriceDTO } from '../../../shared/dtos/gold-price.dto';
 
 const goldPriceFacade = new GoldPriceFacade();
 
+/**
+ * PUT /api/admin/gold-price — Actualiza el precio del oro por gramo (solo ADMIN).
+ */
 export const updateGoldPriceController = async (
   req: Request,
   res: Response,
@@ -26,6 +29,10 @@ export const updateGoldPriceController = async (
   });
 };
 
+/**
+ * GET /api/system/gold-price/history — Devuelve el historial de precios del oro
+ * (solo ADMIN).
+ */
 export const getGoldPriceHistoryController = async (
   req: Request,
   res: Response,

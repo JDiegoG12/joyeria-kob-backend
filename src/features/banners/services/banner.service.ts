@@ -1,12 +1,12 @@
 import { prisma } from '../../../config/prisma';
 import { UpsertBannerServiceDto } from '../dtos/update-banner.dto';
 
-// A fixed ID to ensure we always operate on the same single row.
+// ID fijo para operar siempre sobre el único registro de banner.
 const BANNER_ID = 1;
 
 /**
- * Finds the single banner record.
- * @returns The banner object or null if it doesn't exist.
+ * Busca el único registro de banner.
+ * @returns El banner o `null` si no existe.
  */
 export const findBanner = async () => {
   return prisma.banner.findUnique({
@@ -22,9 +22,9 @@ export const findBanner = async () => {
 };
 
 /**
- * Creates or updates the single banner record.
- * @param data - The data for the banner.
- * @returns The created or updated banner.
+ * Crea o actualiza el único registro de banner.
+ * @param data - Datos del banner (título, subtítulo e imagen).
+ * @returns El banner creado o actualizado.
  */
 export const upsertBanner = async (data: UpsertBannerServiceDto) => {
   const { title, subtitle, imageUrl } = data;
@@ -45,10 +45,10 @@ export const upsertBanner = async (data: UpsertBannerServiceDto) => {
 };
 
 /**
- * Deletes the single banner record.
+ * Elimina el único registro de banner.
  */
 export const deleteBanner = async () => {
-  // Use deleteMany to avoid an error if the record doesn't exist.
+  // Se usa deleteMany para no fallar si el registro no existe.
   return prisma.banner.deleteMany({
     where: { id: BANNER_ID },
   });

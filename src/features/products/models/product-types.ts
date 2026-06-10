@@ -1,9 +1,12 @@
 /**
- * Tipos base y reutilizables
+ * Estado de disponibilidad de un producto en el catálogo.
  */
 export type ProductStatus = 'AVAILABLE' | 'OUT_OF_STOCK' | 'HIDDEN';
 
-// Estructura del JSON flexible para los atributos variables de las joyas.
+/**
+ * Estructura del JSON flexible que describe los atributos variables de una joya
+ * (si requiere talla, tallas disponibles, presencia y tipo de piedras, etc.).
+ */
 export interface IJewelSpecifications {
   requiresSize: boolean;
   availableSizes?: number[];

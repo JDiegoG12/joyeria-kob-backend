@@ -11,8 +11,17 @@ import {
   removeFavoriteService,
 } from '../services/favorite.service';
 
+/** Forma mínima de un error originado en la capa de servicio. */
 type ServiceError = { code?: string; status?: number; message?: string };
 
+/**
+ * Convierte un error arbitrario de la capa de servicio en un `FacadeResult`
+ * de fallo, aplicando valores por defecto cuando faltan código o estado.
+ *
+ * @param error - Error capturado en la fachada.
+ * @param fallbackMessage - Mensaje a usar si el error no aporta uno propio.
+ * @returns Un resultado de fachada fallido normalizado.
+ */
 const normalizeServiceError = <T>(
   error: unknown,
   fallbackMessage: string,
@@ -26,7 +35,17 @@ const normalizeServiceError = <T>(
   };
 };
 
+/**
+ * Fachada de favoritos: orquesta los servicios de favoritos y unifica las
+ * respuestas en el formato `FacadeResult`, normalizando los errores.
+ */
 class FavoriteFacade implements IFavoriteFacade {
+  /**
+   * Obtiene los favoritos del usuario con el producto y su precio calculado.
+   *
+   * @param userId - ID del usuario autenticado.
+   * @returns Resultado con la lista de favoritos o un error normalizado.
+   */
   async getUserFavorites(
     userId: string,
   ): Promise<FacadeResult<FavoriteWithProduct[]>> {
@@ -44,6 +63,13 @@ class FavoriteFacade implements IFavoriteFacade {
     }
   }
 
+  /**
+   * Agrega un producto a los favoritos del usuario.
+   *
+   * @param userId - ID del usuario autenticado.
+   * @param productId - ID del producto a marcar como favorito.
+   * @returns Resultado con el favorito creado o un error normalizado.
+   */
   async addFavorite(
     userId: string,
     productId: string,
@@ -62,6 +88,13 @@ class FavoriteFacade implements IFavoriteFacade {
     }
   }
 
+  /**
+   * Elimina un producto de los favoritos del usuario.
+   *
+   * @param userId - ID del usuario autenticado.
+   * @param productId - ID del producto a quitar de favoritos.
+   * @returns Resultado exitoso (`true`) o un error normalizado.
+   */
   async removeFavorite(
     userId: string,
     productId: string,

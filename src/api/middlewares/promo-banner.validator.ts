@@ -31,6 +31,11 @@ const linkCategoryId = body('linkCategoryId')
   .isInt({ gt: 0 })
   .withMessage('La categoría del enlace debe ser un entero positivo.');
 
+/**
+ * Validadores para crear un banner de promoción.
+ * Exige un `linkType` válido y valida el formato básico de título, subtítulo
+ * y los identificadores de enlace (producto/categoría).
+ */
 export const createPromoBannerValidator = [
   title,
   subtitle,
@@ -39,6 +44,11 @@ export const createPromoBannerValidator = [
   linkCategoryId,
 ];
 
+/**
+ * Validadores para actualizar un banner de promoción.
+ * Igual que la creación, pero con `linkType` opcional para permitir
+ * actualizaciones parciales.
+ */
 export const updatePromoBannerValidator = [
   title,
   subtitle,
@@ -47,6 +57,10 @@ export const updatePromoBannerValidator = [
   linkCategoryId,
 ];
 
+/**
+ * Validador del parámetro de ruta `id`: debe ser un entero positivo y se
+ * convierte a número.
+ */
 export const validateIdParam = [
   param('id')
     .isInt({ gt: 0 })

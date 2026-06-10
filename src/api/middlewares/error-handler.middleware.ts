@@ -17,7 +17,7 @@ export const globalErrorHandler = (
   res: Response,
   next: NextFunction,
 ) => {
-  console.error('💥 UNHANDLED ERROR:', err.stack || err);
+  console.error('UNHANDLED ERROR:', err.stack || err);
 
   // Si la respuesta ya fue enviada, delegamos al manejador de errores por defecto de Express.
   if (res.headersSent) {

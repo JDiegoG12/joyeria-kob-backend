@@ -21,14 +21,26 @@ const socialNetwork = body('socialNetwork')
   .isIn(Object.values(SocialNetwork))
   .withMessage('El valor de la red social no es válido.');
 
+/**
+ * Validadores para crear un contenido social.
+ * Exige título, enlace (URL válida) y una red social dentro del enum permitido.
+ */
 export const createSocialContentValidator = [title, link, socialNetwork];
 
+/**
+ * Validadores para actualizar un contenido social.
+ * Todos los campos son opcionales para permitir actualizaciones parciales.
+ */
 export const updateSocialContentValidator = [
   title.optional(),
   link.optional(),
   socialNetwork.optional(),
 ];
 
+/**
+ * Validador del parámetro de ruta `id`: debe ser un entero positivo y se
+ * convierte a número.
+ */
 export const validateIdParam = [
   param('id')
     .isInt({ gt: 0 })

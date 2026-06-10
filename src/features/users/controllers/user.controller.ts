@@ -5,6 +5,12 @@ import { UserResponseDTO } from '../dtos/auth.dto';
 
 const userFacade = new UserFacade();
 
+/**
+ * PUT /api/users/me — Actualiza el perfil del usuario autenticado.
+ *
+ * El ID se toma del token JWT (no del body), de modo que un usuario solo puede
+ * actualizar su propio perfil. La respuesta excluye la contraseña.
+ */
 export const updateProfileController = async (
   req: AuthenticatedRequest,
   res: Response,

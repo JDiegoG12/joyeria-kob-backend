@@ -8,11 +8,17 @@ import {
 import { FacadeResult } from '../ports/featured-product.ports';
 import { ERROR_CODES } from '../../../shared/constants/error-codes';
 
+/**
+ * Envía la respuesta HTTP a partir de un `FacadeResult`, extrayendo el `status`.
+ */
 const handleResponse = (res: Response, result: FacadeResult<unknown>) => {
   const { status, ...body } = result;
   return res.status(status).json(body);
 };
 
+/**
+ * Responde con un 400 estandarizado a partir de un error de validación de Zod.
+ */
 const handleValidationError = (res: Response, error: ZodError) => {
   return res.status(400).json({
     success: false,
@@ -22,6 +28,9 @@ const handleValidationError = (res: Response, error: ZodError) => {
   });
 };
 
+/**
+ * GET /api/featured-products — Lista los productos destacados.
+ */
 export const getFeaturedProductsController = async (
   _req: Request,
   res: Response,
@@ -35,6 +44,9 @@ export const getFeaturedProductsController = async (
   }
 };
 
+/**
+ * POST /api/featured-products — Agrega un producto a los destacados.
+ */
 export const addFeaturedProductController = async (
   req: Request,
   res: Response,
@@ -54,6 +66,9 @@ export const addFeaturedProductController = async (
   }
 };
 
+/**
+ * DELETE /api/featured-products/:productId — Quita un producto de los destacados.
+ */
 export const removeFeaturedProductController = async (
   req: Request,
   res: Response,
@@ -75,6 +90,9 @@ export const removeFeaturedProductController = async (
   }
 };
 
+/**
+ * PUT /api/featured-products/reorder — Reordena la lista de destacados.
+ */
 export const reorderFeaturedProductsController = async (
   req: Request,
   res: Response,
