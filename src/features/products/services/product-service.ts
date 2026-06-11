@@ -8,7 +8,8 @@ import {
   ProductStatus,
 } from '../models/product-types';
 import { calculateSuggestedPrice } from '../../../shared/utils/price-calculator';
-import { processAndSaveImage } from '../../../shared/utils/image.processor'; 
+import { removeFeaturedProductIfPresent } from '../../featured-products/services/featured-product.service';
+import { processAndSaveImage } from '../../../shared/utils/image.processor';
 import fs from 'fs/promises';
 import path from 'path';
 import { getUploadsSubfolderPath } from '../../../config/paths.config';
@@ -479,6 +480,14 @@ export const updateProductService = async (
       specifications: cleanData.specifications as object | undefined,
     },
   });
+
+  // Si el producto quedó oculto, dejarlo de destacar: se elimina su registro de
+  // destacados y se recompactan posiciones. Así no sigue apareciendo en la
+  // sección "Productos destacados" de la home. Idempotente: no falla si el
+  // producto no estaba destacado.
+  if (reactiveStatus === 'HIDDEN') {
+    await removeFeaturedProductIfPresent(id);
+  }
 
   const finalDiscount = updatedProduct.discountValue.toNumber();
 
