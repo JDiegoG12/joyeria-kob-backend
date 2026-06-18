@@ -1,9 +1,18 @@
 import { Router } from 'express';
-import { register, login } from './controllers/auth.controller';
+import {
+  register,
+  login,
+  googleLogin,
+  forgotPassword,
+  resetPassword,
+} from './controllers/auth.controller';
 import { updateProfileController } from './controllers/user.controller';
 import {
   registerValidator,
   loginValidator,
+  googleLoginValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
 } from '../../api/middlewares/auth.validator';
 import { updateProfileValidator } from '../../api/middlewares/user.validator';
 import { authenticateToken } from '../../api/middlewares/auth.middleware';
@@ -103,6 +112,104 @@ router.post('/register', registerValidator, asyncHandler(register));
  *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.post('/login', loginValidator, asyncHandler(login));
+
+/**
+ * @openapi
+ * /api/auth/google:
+ *   post:
+ *     tags:
+ *       - Autenticación
+ *     summary: Iniciar sesión con Google
+ *     description: Verifica el ID token de Google Identity Services. Si el email ya existe, vincula la cuenta; si no, la crea. Devuelve un token JWT.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - credential
+ *             properties:
+ *               credential:
+ *                 type: string
+ *                 description: ID token (JWT) emitido por Google en el frontend.
+ *     responses:
+ *       200:
+ *         description: Inicio de sesión exitoso.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessAuthResponse'
+ *       401:
+ *         description: No se pudo verificar la sesión de Google.
+ */
+router.post('/google', googleLoginValidator, asyncHandler(googleLogin));
+
+/**
+ * @openapi
+ * /api/auth/forgot-password:
+ *   post:
+ *     tags:
+ *       - Autenticación
+ *     summary: Solicitar recuperación de contraseña
+ *     description: Envía un correo con el enlace de restablecimiento. Responde siempre 200 con un mensaje genérico, sin revelar si el email existe.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Solicitud procesada (mensaje genérico).
+ */
+router.post(
+  '/forgot-password',
+  forgotPasswordValidator,
+  asyncHandler(forgotPassword),
+);
+
+/**
+ * @openapi
+ * /api/auth/reset-password:
+ *   post:
+ *     tags:
+ *       - Autenticación
+ *     summary: Restablecer contraseña
+ *     description: Establece una nueva contraseña a partir del token recibido por correo.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - password
+ *             properties:
+ *               token:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: 'Entre 6 y 50 caracteres.'
+ *     responses:
+ *       200:
+ *         description: Contraseña actualizada.
+ *       400:
+ *         description: Token inválido o expirado.
+ */
+router.post(
+  '/reset-password',
+  resetPasswordValidator,
+  asyncHandler(resetPassword),
+);
 
 /**
  * @openapi
