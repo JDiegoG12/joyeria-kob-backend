@@ -21,6 +21,10 @@ import {
   PageMeta,
 } from './utils/html.util';
 import { frontendUrl, SITE_NAME } from './render.config';
+import {
+  buildOrganizationJsonLd,
+  buildProductJsonLd,
+} from './utils/json-ld';
 
 /** Descripción de la home (alineada con el `<meta>` de home-page.tsx). */
 const HOME_DESCRIPTION =
@@ -54,6 +58,8 @@ export const buildHomeHtml = (data: RenderHomeData): string => {
     canonicalUrl: frontendUrl('/'),
     ogType: 'website',
     ogImage: data.featured[0]?.imageUrl ?? undefined,
+    // JSON-LD de la organización (marca) — misma estructura que el frontend.
+    jsonLd: buildOrganizationJsonLd(),
   };
 
   const categoriesHtml =
@@ -123,13 +129,25 @@ export const buildProductHtml = (product: RenderProductDetail): string => {
     product.description?.trim() ||
     `${product.name} en oro 18k, diseño personalizado de ${SITE_NAME}.`;
 
+  const canonicalUrl = frontendUrl(product.path);
   const meta: PageMeta = {
     title: `${product.name} | ${SITE_NAME}`,
     description,
     // og:url / canonical apuntan a la URL real del frontend (slug canónico).
-    canonicalUrl: frontendUrl(product.path),
+    canonicalUrl,
     ogType: 'product',
     ogImage: product.imageUrl ?? undefined,
+    // JSON-LD del producto — misma estructura de datos que el frontend.
+    jsonLd: buildProductJsonLd({
+      name: product.name,
+      description,
+      images: product.imageUrls,
+      sku: product.id,
+      // Precio numérico sin separadores de miles (lo que paga el cliente).
+      price: Math.round(product.finalPrice),
+      inStock: product.inStock,
+      url: canonicalUrl,
+    }),
   };
 
   const priceHtml = product.hasDiscount

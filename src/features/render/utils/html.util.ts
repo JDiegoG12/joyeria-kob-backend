@@ -5,8 +5,8 @@
  * la plantilla del documento completo (`<head>` con SEO + `<body>` en texto).
  *
  * El HTML no lleva CSS ni JS: solo lo lee un crawler. La prioridad es que
- * `<title>`, `<meta name="description">`, las etiquetas Open Graph y el texto
- * visible reflejen el contenido real de la página equivalente del frontend.
+ * `<title>`, `<meta name="description">`, las etiquetas Open Graph, el JSON-LD y
+ * el texto visible reflejen el contenido real de la página del frontend.
  */
 
 import { SITE_NAME } from '../render.config';
@@ -64,12 +64,31 @@ export interface PageMeta {
   ogImage?: string;
   /** Si `true`, añade `noindex` (p. ej. producto no encontrado). */
   noindex?: boolean;
+  /**
+   * Datos estructurados JSON-LD (schema.org) a incrustar en el `<head>`.
+   * Se serializa de forma segura dentro de `<script type="application/ld+json">`.
+   */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
+
+/**
+ * Serializa un objeto a JSON seguro para incrustar dentro de un
+ * `<script type="application/ld+json">`. El contenido se interpreta como JSON
+ * (no como JavaScript), por lo que basta con neutralizar `<`, `>` y `&` —
+ * escapados como secuencias `\uXXXX`, que siguen siendo JSON válido— para que
+ * un eventual `</script>` o entidad en los datos no rompa la etiqueta ni el
+ * documento HTML.
+ */
+const serializeJsonLd = (data: Record<string, unknown>): string =>
+  JSON.stringify(data)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
 
 /**
  * Ensambla el documento HTML completo a partir de los metadatos y el cuerpo.
  *
- * @param meta - Metadatos SEO (title, description, canonical, og:*).
+ * @param meta - Metadatos SEO (title, description, canonical, og:*, jsonLd).
  * @param bodyHtml - HTML del `<body>` (contenido visible en texto plano).
  * @returns Documento HTML5 completo listo para enviarse al crawler.
  */
@@ -84,6 +103,16 @@ export const renderHtmlPage = (meta: PageMeta, bodyHtml: string): string => {
     : '';
   const robotsTag = meta.noindex
     ? '\n    <meta name="robots" content="noindex" />'
+    : '';
+
+  // JSON-LD: admite un objeto o un arreglo; se emite un <script> por cada uno.
+  const jsonLdBlocks = meta.jsonLd
+    ? (Array.isArray(meta.jsonLd) ? meta.jsonLd : [meta.jsonLd])
+        .map(
+          (block) =>
+            `\n    <script type="application/ld+json">${serializeJsonLd(block)}</script>`,
+        )
+        .join('')
     : '';
 
   return `<!doctype html>
@@ -109,7 +138,7 @@ export const renderHtmlPage = (meta: PageMeta, bodyHtml: string): string => {
       meta.ogImage
         ? `\n    <meta name="twitter:image" content="${escapeHtml(meta.ogImage)}" />`
         : ''
-    }
+    }${jsonLdBlocks}
   </head>
   <body>
 ${bodyHtml}

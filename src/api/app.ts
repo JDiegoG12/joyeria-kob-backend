@@ -17,6 +17,8 @@ import { UPLOADS_PATH } from '../config/paths.config';
 import cors from 'cors';
 import compression from 'compression';
 import renderRouter from '../features/render/routes';
+import { getSitemap } from '../features/sitemap/sitemap.controller';
+import { asyncHandler } from '../shared/utils/async-handler';
 /**
  * Instancia principal de la aplicación Express para la Joyería KOB.
  */
@@ -62,6 +64,11 @@ app.use(express.json());
 
 // Documentación Swagger en /api-docs
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// --- SITEMAP DINÁMICO (SEO) ---
+// Generado desde la BD (productos no ocultos) + páginas estáticas, con sitemap
+// de imágenes. Se sirve en la raíz (/sitemap.xml) como espera robots.txt.
+app.get('/sitemap.xml', asyncHandler(getSitemap));
 
 // Rutas de la API
 app.use('/api/products', productRouter);
