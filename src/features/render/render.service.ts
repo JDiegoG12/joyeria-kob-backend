@@ -42,6 +42,10 @@ export interface RenderProductCard {
 /** Detalle completo de un producto para `/render/producto/:slug`. */
 export interface RenderProductDetail extends RenderProductCard {
   description: string;
+  /** `true` si el producto está disponible (status AVAILABLE) → JSON-LD InStock. */
+  inStock: boolean;
+  /** URLs absolutas de TODAS las imágenes del producto (para JSON-LD `image`). */
+  imageUrls: string[];
 }
 
 /** Categoría raíz simplificada para enlazar desde la home. */
@@ -65,12 +69,21 @@ type PricedProduct = {
   name: string;
   description: string;
   images: unknown;
+  status: string;
   calculatedPrice: number;
   finalPrice: number;
   category?: {
     name: string;
     parent?: { name: string } | null;
   } | null;
+};
+
+/** Devuelve las URLs absolutas de todas las imágenes (filenames string). */
+const allImageUrls = (images: unknown): string[] => {
+  if (!Array.isArray(images)) return [];
+  return images
+    .filter((img): img is string => typeof img === 'string')
+    .map((filename) => productImageUrl(filename));
 };
 
 /** Devuelve el nombre del primer archivo de imagen, o `null` si no hay. */
@@ -154,6 +167,12 @@ export const getRenderProductData = async (
   // renderizan, igual que en el frontend (su página sigue siendo navegable).
   if (!product || product.status === 'HIDDEN') return null;
 
-  const card = toCard(product as unknown as PricedProduct);
-  return { ...card, description: product.description };
+  const priced = product as unknown as PricedProduct;
+  const card = toCard(priced);
+  return {
+    ...card,
+    description: product.description,
+    inStock: product.status === 'AVAILABLE',
+    imageUrls: allImageUrls(priced.images),
+  };
 };
