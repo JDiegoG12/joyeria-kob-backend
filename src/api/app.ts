@@ -15,10 +15,21 @@ import favoriteRouter from '../features/favorites/routes';
 import { globalErrorHandler } from './middlewares/error-handler.middleware';
 import { UPLOADS_PATH } from '../config/paths.config';
 import cors from 'cors';
+import compression from 'compression';
+import renderRouter from '../features/render/routes';
 /**
  * Instancia principal de la aplicación Express para la Joyería KOB.
  */
 const app: Application = express();
+
+// --- COMPRESIÓN (gzip) ---
+// Comprime las respuestas (principalmente el JSON de la API y el HTML de
+// /render) para reducir el peso transferido. La auditoría SEO detectó que no
+// existía compresión. Se registra antes que cualquier ruta para que envuelva
+// todas las respuestas. `compression` respeta el header `Accept-Encoding` del
+// cliente y omite la compresión de los archivos ya comprimidos de /uploads
+// (imágenes), por lo que es seguro dejarlo global.
+app.use(compression());
 
 // --- CONFIGURACIÓN DE CORS ---
 // Orígenes permitidos leídos desde las variables de entorno.
@@ -65,6 +76,14 @@ app.use('/api/featured-products', featuredProductRouter);
 app.use('/api/social-contents', socialContentRouter);
 app.use('/api/promo-banners', promoBannerRouter);
 app.use('/api/favorites', favoriteRouter);
+
+// --- DYNAMIC RENDERING PARA BOTS (SEO) ---
+// HTML completo y pre-renderizado de las páginas públicas equivalentes a las
+// del frontend (home, catálogo, detalle de producto). Apache (del lado del
+// frontend) enruta hacia aquí solo cuando detecta un user-agent de crawler.
+// Estas rutas NO dependen de cookies/sesión y se sirven igual sea por redirect
+// 302 o por proxy reverso desde Apache. Ver src/features/render.
+app.use('/render', renderRouter);
 
 /**
  * @openapi
