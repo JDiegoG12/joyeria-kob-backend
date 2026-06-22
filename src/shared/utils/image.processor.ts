@@ -53,6 +53,11 @@ const FULL_SPECS: Record<ImageSubfolder, ResizeSpec> = {
 const THUMBNAIL_SPECS: Partial<Record<ImageSubfolder, ResizeSpec>> = {
   products: { width: 400, height: 400, fit: 'inside' },
   'social-content': { width: 600, height: 1067, fit: 'cover' },
+  // El banner del hero ocupa el ancho completo del viewport. Una miniatura de
+  // 1280x720 (16:9, mismo recorte que la grande) cubre con nitidez móvil y
+  // tablet (incluso a alta densidad) sin descargar la versión 1920x1080: es
+  // la que sirve el `srcset` del hero en el LCP de mobile.
+  banners: { width: 1280, height: 720, fit: 'cover' },
 };
 
 /** Indica si una subcarpeta genera (y por tanto puede servir) miniatura. */
