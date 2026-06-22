@@ -13,6 +13,7 @@ import socialContentRouter from '../features/social-content/routes';
 import promoBannerRouter from '../features/promo-banners/routes';
 import favoriteRouter from '../features/favorites/routes';
 import { globalErrorHandler } from './middlewares/error-handler.middleware';
+import { thumbnailOnDemand } from './middlewares/thumbnail.middleware';
 import { UPLOADS_PATH } from '../config/paths.config';
 import cors from 'cors';
 import compression from 'compression';
@@ -125,7 +126,16 @@ app.get('/', (req: Request, res: Response) => {
 // Middleware para servir archivos estáticos (imágenes)
 // La URL pública sigue siendo /uploads, pero el origen físico ahora es dinámico
 // y se lee desde nuestra configuración centralizada.
-app.use('/uploads', express.static(UPLOADS_PATH));
+//
+// `thumbnailOnDemand` va ANTES de express.static: genera la miniatura
+// (`uuid-thumb.webp`) si aún no existe y deja que express.static la sirva. Las
+// imágenes se nombran con UUID (una subida nueva = archivo nuevo), así que es
+// seguro cachearlas de forma agresiva en el navegador/CDN.
+app.use(
+  '/uploads',
+  thumbnailOnDemand,
+  express.static(UPLOADS_PATH, { maxAge: '30d' }),
+);
 
 // --- MANEJO DE ERRORES ---
 // Este DEBE ser el último middleware que se registra para atrapar errores
