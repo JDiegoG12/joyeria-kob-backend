@@ -22,6 +22,7 @@ import {
 } from './utils/html.util';
 import { frontendUrl, SITE_NAME } from './render.config';
 import {
+  buildLocalBusinessJsonLd,
   buildOrganizationJsonLd,
   buildProductJsonLd,
 } from './utils/json-ld';
@@ -58,8 +59,9 @@ export const buildHomeHtml = (data: RenderHomeData): string => {
     canonicalUrl: frontendUrl('/'),
     ogType: 'website',
     ogImage: data.featured[0]?.imageUrl ?? undefined,
-    // JSON-LD de la organización (marca) — misma estructura que el frontend.
-    jsonLd: buildOrganizationJsonLd(),
+    // JSON-LD de la home — misma estructura que el frontend: la marca
+    // (Organization) y el negocio local (JewelryStore, sección "Visítanos").
+    jsonLd: [buildOrganizationJsonLd(), buildLocalBusinessJsonLd()],
   };
 
   const categoriesHtml =
