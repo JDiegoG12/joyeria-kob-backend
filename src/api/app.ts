@@ -19,6 +19,7 @@ import cors from 'cors';
 import compression from 'compression';
 import renderRouter from '../features/render/routes';
 import { getSitemap } from '../features/sitemap/sitemap.controller';
+import { getGoogleFeed } from '../features/google-feed/google-feed.controller';
 import { asyncHandler } from '../shared/utils/async-handler';
 /**
  * Instancia principal de la aplicación Express para la Joyería KOB.
@@ -70,6 +71,11 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Generado desde la BD (productos no ocultos) + páginas estáticas, con sitemap
 // de imágenes. Se sirve en la raíz (/sitemap.xml) como espera robots.txt.
 app.get('/sitemap.xml', asyncHandler(getSitemap));
+
+// --- FEED DE PRODUCTOS PARA GOOGLE (Merchant Center) ---
+// RSS 2.0 generado desde la BD (solo productos AVAILABLE) con precios calculados
+// en vivo, para que coincidan con el JSON-LD y la landing. Se sirve en la raíz.
+app.get('/google-feed.xml', asyncHandler(getGoogleFeed));
 
 // Rutas de la API
 app.use('/api/products', productRouter);
