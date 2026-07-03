@@ -176,3 +176,26 @@ export const getRenderProductData = async (
     imageUrls: allImageUrls(priced.images),
   };
 };
+
+/**
+ * Detalle de TODOS los productos indexables (no-HIDDEN, incluye OUT_OF_STOCK),
+ * en UNA sola consulta. Mismo criterio de visibilidad que el sitemap y que
+ * `/render/producto`. Lo usa el pre-render para generar una página por joya sin
+ * caer en N+1 (evita un `getProductByIdService` por slug).
+ */
+export const getAllRenderProductDetails = async (): Promise<
+  RenderProductDetail[]
+> => {
+  const products = (await getAllProductsService(
+    true,
+  )) as unknown as PricedProduct[];
+
+  return products
+    .filter((product) => product.status !== 'HIDDEN')
+    .map((product) => ({
+      ...toCard(product),
+      description: product.description,
+      inStock: product.status === 'AVAILABLE',
+      imageUrls: allImageUrls(product.images),
+    }));
+};
