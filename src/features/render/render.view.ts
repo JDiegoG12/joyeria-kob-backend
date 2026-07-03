@@ -19,6 +19,7 @@ import {
   formatPriceCOP,
   renderHtmlPage,
   PageMeta,
+  RenderView,
 } from './utils/html.util';
 import { frontendUrl, SITE_NAME } from './render.config';
 import {
@@ -50,9 +51,9 @@ const renderProductListItem = (card: RenderProductCard): string => {
 };
 
 /**
- * HTML de `/render/home`: marca, descripción, categorías y destacados.
+ * View de la home: marca, descripción, categorías y destacados.
  */
-export const buildHomeHtml = (data: RenderHomeData): string => {
+export const buildHomeView = (data: RenderHomeData): RenderView => {
   const meta: PageMeta = {
     title: `${SITE_NAME} | Joyas de oro 18k personalizadas en El Bordo`,
     description: HOME_DESCRIPTION,
@@ -93,13 +94,21 @@ ${data.featured.map(renderProductListItem).join('\n')}
 ${categoriesHtml}
 ${featuredHtml}`;
 
+  return { meta, body };
+};
+
+/** HTML completo de `/render/home` (envuelve el view con el documento). */
+export const buildHomeHtml = (data: RenderHomeData): string => {
+  const { meta, body } = buildHomeView(data);
   return renderHtmlPage(meta, body);
 };
 
 /**
- * HTML de `/render/catalogo`: listado de todos los productos disponibles.
+ * View del catálogo: listado de todos los productos disponibles.
  */
-export const buildCatalogHtml = (products: RenderProductCard[]): string => {
+export const buildCatalogView = (
+  products: RenderProductCard[],
+): RenderView => {
   const meta: PageMeta = {
     title: `Catálogo | ${SITE_NAME}`,
     description: CATALOG_DESCRIPTION,
@@ -120,13 +129,21 @@ ${products.map(renderProductListItem).join('\n')}
     <p>${products.length} producto(s) disponible(s).</p>
 ${listHtml}`;
 
+  return { meta, body };
+};
+
+/** HTML completo de `/render/catalogo`. */
+export const buildCatalogHtml = (products: RenderProductCard[]): string => {
+  const { meta, body } = buildCatalogView(products);
   return renderHtmlPage(meta, body);
 };
 
 /**
- * HTML de `/render/producto/:slug`: detalle completo de la joya.
+ * View del detalle de una joya (`/producto/:slug`).
  */
-export const buildProductHtml = (product: RenderProductDetail): string => {
+export const buildProductView = (
+  product: RenderProductDetail,
+): RenderView => {
   const description =
     product.description?.trim() ||
     `${product.name} en oro 18k, diseño personalizado de ${SITE_NAME}.`;
@@ -174,7 +191,73 @@ ${priceHtml}
     <p>Marca: ${escapeHtml(SITE_NAME)}</p>
     <p><a href="${escapeHtml(frontendUrl('/catalogo'))}">Volver al catálogo</a></p>`;
 
+  return { meta, body };
+};
+
+/** HTML completo de `/render/producto/:slug`. */
+export const buildProductHtml = (product: RenderProductDetail): string => {
+  const { meta, body } = buildProductView(product);
   return renderHtmlPage(meta, body);
+};
+
+/**
+ * Páginas de información legales/estáticas indexables. Rutas, títulos y
+ * descripciones alineados con el frontend (data/*.data.ts y los `<meta
+ * description>` de src/features/information/pages). El contenido real de la
+ * política lo pinta la SPA con React; aquí basta un cuerpo mínimo con título y
+ * descripción para el crawler sin JS, más el canonical correcto.
+ */
+export const INFO_PAGES: Record<
+  string,
+  { path: string; title: string; description: string }
+> = {
+  terminos: {
+    path: '/informacion/terminos',
+    title: 'Términos y condiciones de uso',
+    description:
+      'Términos y condiciones de uso de Joyería KOB: condiciones de compra, uso del sitio y políticas de nuestras joyas en oro 18k personalizadas.',
+  },
+  garantia: {
+    path: '/informacion/garantia',
+    title: 'Política de garantía, reembolso y devoluciones',
+    description:
+      'Política de garantía, reembolso y devoluciones de Joyería KOB para joyas de oro 18k personalizadas. Conoce tus derechos y nuestros tiempos.',
+  },
+  privacidad: {
+    path: '/informacion/privacidad',
+    title: 'Política de privacidad',
+    description:
+      'Política de privacidad de Joyería KOB: cómo recolectamos, usamos y protegemos tus datos personales al comprar joyas de oro 18k.',
+  },
+  materiales: {
+    path: '/informacion/materiales',
+    title: 'Materiales',
+    description:
+      'Materiales de las joyas de Joyería KOB: oro 18k, piedras y acabados. Conoce la calidad y el cuidado de nuestras piezas personalizadas.',
+  },
+};
+
+/**
+ * View de una página de información. Devuelve `null` si el slug no es conocido.
+ */
+export const buildInfoView = (page: string): RenderView | null => {
+  const info = INFO_PAGES[page];
+  if (!info) return null;
+
+  const meta: PageMeta = {
+    title: `${info.title} | ${SITE_NAME}`,
+    description: info.description,
+    canonicalUrl: frontendUrl(info.path),
+    ogType: 'website',
+  };
+
+  const body = `    <h1>${escapeHtml(info.title)}</h1>
+    <p>${escapeHtml(info.description)}</p>
+    <p><a href="${escapeHtml(frontendUrl('/'))}">Ir al inicio</a> · <a href="${escapeHtml(
+      frontendUrl('/catalogo'),
+    )}">Ver catálogo</a></p>`;
+
+  return { meta, body };
 };
 
 /**

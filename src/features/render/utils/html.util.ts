@@ -86,13 +86,29 @@ const serializeJsonLd = (data: Record<string, unknown>): string =>
     .replace(/&/g, '\\u0026');
 
 /**
- * Ensambla el documento HTML completo a partir de los metadatos y el cuerpo.
- *
- * @param meta - Metadatos SEO (title, description, canonical, og:*, jsonLd).
- * @param bodyHtml - HTML del `<body>` (contenido visible en texto plano).
- * @returns Documento HTML5 completo listo para enviarse al crawler.
+ * Un view listo para renderizar: los metadatos SEO + el HTML del `<body>`.
+ * Es lo que devuelven los builders de render.view; el pre-render lo usa para
+ * componer el HTML final (shell de Vite + `buildSeoHead` + `body` en #root).
  */
-export const renderHtmlPage = (meta: PageMeta, bodyHtml: string): string => {
+export interface RenderView {
+  meta: PageMeta;
+  body: string;
+}
+
+/**
+ * Construye SOLO el bloque de etiquetas SEO del `<head>` (title, description,
+ * canonical, robots, Open Graph, Twitter, JSON-LD), SIN `charset`/`viewport`.
+ *
+ * Se extrae aparte de {@link renderHtmlPage} para reutilizarlo en dos destinos:
+ *  - el documento HTML completo que sirven las rutas `/render`, y
+ *  - el pre-render estático, que inyecta este bloque en el `<head>` del
+ *    `index.html` real del frontend (que ya trae `charset`/`viewport` y los
+ *    `<script>` con hash de Vite).
+ *
+ * Devuelve el markup indentado con 4 espacios, con un `<title>` propio para que
+ * el consumidor reemplace el genérico del shell. No incluye salto final.
+ */
+export const buildSeoHead = (meta: PageMeta): string => {
   const description = truncateForMeta(meta.description);
   const safeTitle = escapeHtml(meta.title);
   const safeDescription = escapeHtml(description);
@@ -115,12 +131,7 @@ export const renderHtmlPage = (meta: PageMeta, bodyHtml: string): string => {
         .join('')
     : '';
 
-  return `<!doctype html>
-<html lang="es-CO">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${safeTitle}</title>
+  return `    <title>${safeTitle}</title>
     <meta name="description" content="${safeDescription}" />
     <link rel="canonical" href="${safeCanonical}" />${robotsTag}
 
@@ -138,10 +149,28 @@ export const renderHtmlPage = (meta: PageMeta, bodyHtml: string): string => {
       meta.ogImage
         ? `\n    <meta name="twitter:image" content="${escapeHtml(meta.ogImage)}" />`
         : ''
-    }${jsonLdBlocks}
+    }${jsonLdBlocks}`;
+};
+
+/**
+ * Ensambla el documento HTML completo a partir de los metadatos y el cuerpo.
+ * Reutiliza {@link buildSeoHead} para el `<head>`, de modo que el HTML de las
+ * rutas `/render` y el `<head>` inyectado en el pre-render provienen de una
+ * única fuente.
+ *
+ * @param meta - Metadatos SEO (title, description, canonical, og:*, jsonLd).
+ * @param bodyHtml - HTML del `<body>` (contenido visible en texto plano).
+ * @returns Documento HTML5 completo listo para enviarse al crawler.
+ */
+export const renderHtmlPage = (meta: PageMeta, bodyHtml: string): string =>
+  `<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+${buildSeoHead(meta)}
   </head>
   <body>
 ${bodyHtml}
   </body>
 </html>`;
-};
