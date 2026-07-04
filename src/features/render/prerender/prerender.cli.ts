@@ -1,33 +1,25 @@
 /**
  * @file prerender.cli.ts
- * @description Entrypoint ejecutado por el CRON de hPanel. Genera el pre-render
- * completo y termina. Carga `dotenv` explícitamente porque el cron NO hereda las
- * variables de entorno que el panel inyecta al proceso Node persistente.
+ * @description Entrypoint STANDALONE del pre-render, para el disparo MANUAL por
+ * SSH tras cada deploy del frontend (regenera con los hashes de Vite nuevos).
+ * Genera el pre-render completo y termina.
  *
- * Ejecución (cada 6h): ver comando del cron en el README/plan SEO. También sirve
- * para el disparo MANUAL tras cada deploy del frontend (evita assets stale).
+ * La regeneración periódica NO la hace un cron (deshabilitado en el plan de
+ * Hostinger) sino un timer interno en la app — ver `prerender.scheduler.ts`.
+ * Este CLI es adicional a ese timer.
  *
- * Códigos de salida: 0 = ok, 1 = error (queda en el log del cron).
+ * Carga `dotenv` explícitamente porque, al ejecutarse fuera de la app (sesión
+ * SSH), no hereda las variables que Hostinger inyecta al proceso Node. Ver el
+ * comando exacto (con `--env-file`) en SEO-DEPLOY.md.
+ *
+ * Códigos de salida: 0 = ok, 1 = error.
  */
 
 import 'dotenv/config';
 import { prisma } from '../../../config/prisma';
-import { generatePrerender } from './prerender.generator';
+import { runPrerender } from './prerender.generator';
 
-const main = async (): Promise<void> => {
-  const startedAt = Date.now();
-  const result = await generatePrerender();
-  const secs = ((Date.now() - startedAt) / 1000).toFixed(1);
-  const prunedNote = result.pruned.length
-    ? ` · purgados: ${result.pruned.join(', ')}`
-    : '';
-  console.log(
-    `[prerender] ${new Date().toISOString()} · ${result.pages} páginas + ` +
-      `${result.products} productos en ${secs}s${prunedNote}`,
-  );
-};
-
-main()
+runPrerender()
   .then(async () => {
     await prisma.$disconnect();
     process.exit(0);
