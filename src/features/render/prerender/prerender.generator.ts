@@ -97,3 +97,24 @@ export const generatePrerender = async (): Promise<PrerenderResult> => {
 
   return { pages, products: products.length, pruned };
 };
+
+/**
+ * Ejecuta una generación completa y loguea el resumen con timestamp. Es el punto
+ * de entrada COMPARTIDO por el CLI (`prerender.cli.ts`, disparo manual por SSH)
+ * y el timer interno (`prerender.scheduler.ts`), para no duplicar el formato del
+ * log. Lanza si la generación falla; el llamador decide cómo manejarlo (el CLI
+ * sale con código 1; el timer lo captura y sigue vivo).
+ */
+export const runPrerender = async (): Promise<PrerenderResult> => {
+  const startedAt = Date.now();
+  const result = await generatePrerender();
+  const secs = ((Date.now() - startedAt) / 1000).toFixed(1);
+  const prunedNote = result.pruned.length
+    ? ` · purgados: ${result.pruned.join(', ')}`
+    : '';
+  console.log(
+    `[prerender] ${new Date().toISOString()} · ${result.pages} páginas + ` +
+      `${result.products} productos en ${secs}s${prunedNote}`,
+  );
+  return result;
+};
