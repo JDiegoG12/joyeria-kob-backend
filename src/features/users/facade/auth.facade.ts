@@ -15,12 +15,12 @@ import * as userService from '../services/user.service';
 import { FacadeResult } from '../../../shared/types/facade';
 import { User } from '@prisma/client';
 import { ERROR_CODES } from '../../../shared/constants/error-codes';
+import { JWT_SECRET } from '../../../config/env';
 import {
   buildResetPasswordUrl,
   sendPasswordResetEmail,
 } from '../../../shared/email/email.service';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-for-dev';
 const SALT_ROUNDS = 10;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hora

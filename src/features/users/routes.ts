@@ -16,6 +16,10 @@ import {
 } from '../../api/middlewares/auth.validator';
 import { updateProfileValidator } from '../../api/middlewares/user.validator';
 import { authenticateToken } from '../../api/middlewares/auth.middleware';
+import {
+  authLimiter,
+  passwordResetLimiter,
+} from '../../api/middlewares/rate-limit.middleware';
 
 import { asyncHandler } from '../../shared/utils/async-handler';
 const router = Router();
@@ -73,7 +77,7 @@ const router = Router();
  *       409:
  *         description: El email ya está en uso.
  */
-router.post('/register', registerValidator, asyncHandler(register));
+router.post('/register', authLimiter, registerValidator, asyncHandler(register));
 
 /**
  * @openapi
@@ -111,7 +115,7 @@ router.post('/register', registerValidator, asyncHandler(register));
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */
-router.post('/login', loginValidator, asyncHandler(login));
+router.post('/login', authLimiter, loginValidator, asyncHandler(login));
 
 /**
  * @openapi
@@ -171,6 +175,7 @@ router.post('/google', googleLoginValidator, asyncHandler(googleLogin));
  */
 router.post(
   '/forgot-password',
+  passwordResetLimiter,
   forgotPasswordValidator,
   asyncHandler(forgotPassword),
 );
@@ -207,6 +212,7 @@ router.post(
  */
 router.post(
   '/reset-password',
+  passwordResetLimiter,
   resetPasswordValidator,
   asyncHandler(resetPassword),
 );

@@ -16,6 +16,7 @@ import { globalErrorHandler } from './middlewares/error-handler.middleware';
 import { thumbnailOnDemand } from './middlewares/thumbnail.middleware';
 import { UPLOADS_PATH } from '../config/paths.config';
 import cors from 'cors';
+import helmet from 'helmet';
 import compression from 'compression';
 import renderRouter from '../features/render/routes';
 import { getSitemap } from '../features/sitemap/sitemap.controller';
@@ -25,6 +26,30 @@ import { asyncHandler } from '../shared/utils/async-handler';
  * Instancia principal de la aplicación Express para la Joyería KOB.
  */
 const app: Application = express();
+
+// --- PROXY INVERSO ---
+// En producción la app corre detrás del proxy de Apache/Hostinger. Sin esto,
+// Express ve siempre la IP del proxy como IP del cliente, lo que rompería el
+// rate limiting (todas las peticiones contarían como una sola IP). Confiamos en
+// un único salto de proxy.
+app.set('trust proxy', 1);
+
+// --- CABECERAS DE SEGURIDAD (helmet) ---
+// Añade cabeceras HTTP de seguridad: HSTS, X-Content-Type-Options: nosniff,
+// X-Frame-Options: DENY, Referrer-Policy, etc. Dos ajustes sobre los valores
+// por defecto:
+//  - `crossOriginResourcePolicy: cross-origin`: sin esto helmet pondría
+//    `Cross-Origin-Resource-Policy: same-origin` y el frontend (otro origen) no
+//    podría cargar las imágenes servidas en /uploads.
+//  - `contentSecurityPolicy: false`: la CSP relevante para el navegador vive en
+//    el frontend (.htaccess). La CSP por defecto de helmet rompería Swagger UI
+//    (scripts/estilos inline) y no aporta valor en una API que responde JSON.
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: false,
+  }),
+);
 
 // --- COMPRESIÓN (gzip) ---
 // Comprime las respuestas (principalmente el JSON de la API y el HTML de
@@ -49,7 +74,12 @@ const allowedOrigins = [...frontendOrigins, selfOrigin];
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Permite llamadas sin origin (Postman, mobile apps, SSR)
+      // Se permiten peticiones sin `Origin` (curl, health checks/monitores,
+      // apps móviles, SSR). CORS solo protege al navegador, y como la
+      // autenticación viaja en el header `Authorization: Bearer` (no en cookies
+      // de sesión), no hay credenciales ambientales que un tercero pueda abusar
+      // desde otro origen. El navegador, en cambio, SÍ queda restringido a la
+      // lista blanca de abajo.
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
@@ -58,14 +88,27 @@ app.use(
         callback(new Error(`Origen no permitido por CORS: ${origin}`));
       }
     },
-    credentials: true,
+    // `credentials: false`: la API no usa cookies (el JWT va en el header
+    // Authorization), así que no se permite el envío de credenciales
+    // cross-origin. Esto elimina la combinación riesgosa `credentials:true` +
+    // orígenes laxos que podría habilitar CSRF si en el futuro se añadieran
+    // cookies sin protección. Si algún día se migra el token a cookie httpOnly,
+    // habrá que volver a poner `true` y añadir protección CSRF.
+    credentials: false,
   }),
 );
-// Middlewares base para entender JSON
-app.use(express.json());
+// Middlewares base para entender JSON. Se limita el tamaño del body para evitar
+// un DoS por payloads gigantes (agotamiento de memoria/CPU al parsear). La API
+// solo recibe JSON pequeño; las imágenes van por multipart/form-data (multer).
+app.use(express.json({ limit: '100kb' }));
 
-// Documentación Swagger en /api-docs
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Documentación Swagger en /api-docs. Solo se expone fuera de producción: en
+// producción publicaría el mapa completo de endpoints y esquemas, facilitando
+// el reconocimiento a un atacante. Para habilitarla en un entorno concreto,
+// basta con no marcar NODE_ENV=production.
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
 
 // --- SITEMAP DINÁMICO (SEO) ---
 // Generado desde la BD (productos no ocultos) + páginas estáticas, con sitemap
