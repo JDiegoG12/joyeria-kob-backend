@@ -32,6 +32,11 @@ describe('User Service', () => {
         email: 'test@example.com',
         password: 'hashedpassword',
         role: UserRole.CLIENT,
+        provider: 'local',
+        googleId: null,
+        acceptedTermsAt: null,
+        passwordResetToken: null,
+        passwordResetExpires: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -74,6 +79,11 @@ describe('User Service', () => {
         password: 'hashedpassword',
         phone: null,
         role: UserRole.CLIENT,
+        provider: 'local',
+        googleId: null,
+        acceptedTermsAt: null,
+        passwordResetToken: null,
+        passwordResetExpires: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

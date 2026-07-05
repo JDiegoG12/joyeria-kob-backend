@@ -4,6 +4,7 @@ import {
   getFeaturedProductsService,
   addFeaturedProductService,
   removeFeaturedProductService,
+  removeFeaturedProductIfPresent,
   reorderFeaturedProductsService,
 } from '../services/featured-product.service';
 
@@ -162,6 +163,52 @@ describe('Featured Product Service', () => {
 
       expect(tx.featuredProduct.delete).toHaveBeenCalledWith({
         where: { productId: 'prod-1' },
+      });
+    });
+  });
+
+  describe('removeFeaturedProductIfPresent', () => {
+    // No estaba destacado -> no hace nada y NO lanza (idempotente).
+    it('no hace nada cuando el producto no estaba destacado', async () => {
+      mockedFeatured.findUnique.mockResolvedValue(null);
+
+      await expect(
+        removeFeaturedProductIfPresent('x'),
+      ).resolves.toBeUndefined();
+      expect(mockedTransaction).not.toHaveBeenCalled();
+    });
+
+    // Estaba destacado -> borra y recompacta posiciones de los posteriores.
+    it('borra el destacado y recompacta posiciones cuando existía', async () => {
+      mockedFeatured.findUnique.mockResolvedValue({
+        productId: 'prod-1',
+        position: 1,
+      } as never);
+      const tx = {
+        featuredProduct: {
+          delete: jest.fn().mockResolvedValue({}),
+          findMany: jest.fn().mockResolvedValue([
+            { productId: 'prod-2', position: 2 },
+            { productId: 'prod-3', position: 3 },
+          ]),
+          update: jest.fn().mockResolvedValue({}),
+        },
+      };
+      mockedTransaction.mockImplementation(async (cb) => cb(tx));
+
+      await removeFeaturedProductIfPresent('prod-1');
+
+      expect(tx.featuredProduct.delete).toHaveBeenCalledWith({
+        where: { productId: 'prod-1' },
+      });
+      // Los posteriores bajan una posición: 2->1 y 3->2.
+      expect(tx.featuredProduct.update).toHaveBeenCalledWith({
+        where: { productId: 'prod-2' },
+        data: { position: 1 },
+      });
+      expect(tx.featuredProduct.update).toHaveBeenCalledWith({
+        where: { productId: 'prod-3' },
+        data: { position: 2 },
       });
     });
   });

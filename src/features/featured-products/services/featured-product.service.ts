@@ -165,6 +165,36 @@ export const addFeaturedProductService = async (
 };
 
 /**
+ * Borra un destacado y compacta las posiciones de los restantes para que no
+ * queden huecos. Toda la operación es transaccional.
+ *
+ * @param productId - ID del producto destacado a borrar.
+ * @param position - Posición actual del destacado a borrar; las posiciones
+ *   mayores se desplazan una unidad hacia abajo.
+ */
+const deleteAndCompact = async (
+  productId: string,
+  position: number,
+): Promise<void> => {
+  await prisma.$transaction(async (tx) => {
+    await tx.featuredProduct.delete({ where: { productId } });
+
+    const toShift = await tx.featuredProduct.findMany({
+      where: { position: { gt: position } },
+      orderBy: { position: 'asc' },
+      select: { productId: true, position: true },
+    });
+
+    for (const item of toShift) {
+      await tx.featuredProduct.update({
+        where: { productId: item.productId },
+        data: { position: item.position - 1 },
+      });
+    }
+  });
+};
+
+/**
  * Quita un producto de los destacados y compacta las posiciones de los
  * restantes para que no queden huecos. Toda la operación es transaccional.
  *
@@ -186,22 +216,31 @@ export const removeFeaturedProductService = async (
     };
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.featuredProduct.delete({ where: { productId } });
+  await deleteAndCompact(productId, existing.position);
+};
 
-    const toShift = await tx.featuredProduct.findMany({
-      where: { position: { gt: existing.position } },
-      orderBy: { position: 'asc' },
-      select: { productId: true, position: true },
-    });
-
-    for (const item of toShift) {
-      await tx.featuredProduct.update({
-        where: { productId: item.productId },
-        data: { position: item.position - 1 },
-      });
-    }
+/**
+ * Quita un producto de los destacados SOLO si estaba destacado, recompactando
+ * posiciones. A diferencia de `removeFeaturedProductService`, NO lanza un error
+ * si el producto no estaba destacado: es idempotente.
+ *
+ * Pensado para reaccionar a cambios de estado del producto (p. ej. al ocultarlo)
+ * sin que el llamador tenga que verificar antes si estaba o no destacado.
+ *
+ * @param productId - ID del producto a quitar de los destacados, si aplica.
+ */
+export const removeFeaturedProductIfPresent = async (
+  productId: string,
+): Promise<void> => {
+  const existing = await prisma.featuredProduct.findUnique({
+    where: { productId },
   });
+
+  if (!existing) {
+    return;
+  }
+
+  await deleteAndCompact(productId, existing.position);
 };
 
 /**

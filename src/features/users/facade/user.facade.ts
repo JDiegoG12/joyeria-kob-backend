@@ -51,6 +51,16 @@ export class UserFacade {
 
     // Lógica para el cambio de contraseña.
     if (newPassword && currentPassword) {
+      // Las cuentas creadas solo con Google no tienen contraseña que verificar.
+      if (!user.password) {
+        return {
+          success: false,
+          error: ERROR_CODES.OAUTH_ACCOUNT_NO_PASSWORD,
+          message:
+            'Esta cuenta usa inicio de sesión con Google y no tiene contraseña.',
+          statusCode: 400,
+        };
+      }
       const isPasswordValid = await bcrypt.compare(
         currentPassword,
         user.password,

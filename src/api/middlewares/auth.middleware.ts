@@ -2,8 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload, VerifyErrors } from 'jsonwebtoken';
 import { UserRole } from '@prisma/client';
 import { ERROR_CODES } from '../../shared/constants/error-codes';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-for-dev';
+import { JWT_SECRET } from '../../config/env';
 
 // Define una interfaz específica para el payload de nuestro token, extendiendo la de la librería.
 export interface TokenPayload extends JwtPayload {

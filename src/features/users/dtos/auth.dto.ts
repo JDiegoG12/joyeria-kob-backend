@@ -43,6 +43,24 @@ export interface RegisterRequestDTO {
   email: string;
   password: string;
   phone?: string;
+  /** El cliente debe marcar el checkbox de aceptación de términos. */
+  acceptedTerms: boolean;
+}
+
+/** DTO de entrada para el login con Google (ID token de Google Identity Services). */
+export interface GoogleLoginRequestDTO {
+  credential: string;
+}
+
+/** DTO de entrada para solicitar el correo de recuperación de contraseña. */
+export interface ForgotPasswordRequestDTO {
+  email: string;
+}
+
+/** DTO de entrada para restablecer la contraseña con el token recibido por correo. */
+export interface ResetPasswordRequestDTO {
+  token: string;
+  password: string;
 }
 
 /**
@@ -60,4 +78,7 @@ export interface UpdateProfileRequestDTO {
 }
 
 /** DTO de entrada para el inicio de sesión (email y contraseña). */
-export type LoginRequestDTO = Pick<User, 'email' | 'password'>;
+export interface LoginRequestDTO {
+  email: string;
+  password: string;
+}

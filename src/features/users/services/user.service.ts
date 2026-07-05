@@ -38,6 +38,23 @@ export const createUser = async (
 };
 
 /**
+ * Busca un usuario por el hash de su token de recuperación de contraseña,
+ * siempre que el token no haya expirado.
+ * @param hashedToken - Hash (sha256) del token recibido por el usuario.
+ * @returns El usuario con un token válido y vigente, o null.
+ */
+export const findUserByResetToken = async (
+  hashedToken: string,
+): Promise<User | null> => {
+  return prisma.user.findFirst({
+    where: {
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { gt: new Date() },
+    },
+  });
+};
+
+/**
  * Actualiza un usuario por su ID.
  * @param id - El ID del usuario a actualizar.
  * @param data - Los datos para actualizar.

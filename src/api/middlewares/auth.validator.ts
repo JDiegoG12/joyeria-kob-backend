@@ -40,6 +40,9 @@ export const registerValidator = [
     .isLength({ min: 6, max: 50 })
     .withMessage('La contraseña debe tener entre 6 y 50 caracteres.'),
   body('phone').optional().trim(),
+  body('acceptedTerms')
+    .custom((value) => value === true)
+    .withMessage('Debes aceptar los términos y condiciones.'),
   handleValidationErrors,
 ];
 
@@ -50,5 +53,37 @@ export const registerValidator = [
 export const loginValidator = [
   body('email').isEmail().withMessage('Debe proporcionar un email válido.'),
   body('password').notEmpty().withMessage('La contraseña es requerida.'),
+  handleValidationErrors,
+];
+
+/**
+ * Validación para el login con Google: exige el ID token (`credential`) que
+ * emite Google Identity Services en el frontend.
+ */
+export const googleLoginValidator = [
+  body('credential')
+    .notEmpty()
+    .withMessage('Falta el token de Google (credential).'),
+  handleValidationErrors,
+];
+
+/**
+ * Validación para solicitar la recuperación de contraseña.
+ * Solo requiere un email con formato válido.
+ */
+export const forgotPasswordValidator = [
+  body('email').isEmail().withMessage('Debe proporcionar un email válido.'),
+  handleValidationErrors,
+];
+
+/**
+ * Validación para restablecer la contraseña con el token recibido por correo.
+ * Exige el token y una nueva contraseña con la misma política que el registro.
+ */
+export const resetPasswordValidator = [
+  body('token').notEmpty().withMessage('El token es requerido.'),
+  body('password')
+    .isLength({ min: 6, max: 50 })
+    .withMessage('La contraseña debe tener entre 6 y 50 caracteres.'),
   handleValidationErrors,
 ];

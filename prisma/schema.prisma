@@ -155,8 +155,21 @@ model User {
   lastName  String @default("")
   phone     String?  // Opcional
   email     String   @unique
-  password  String
+  password  String?  // Opcional: las cuentas creadas solo con Google no tienen contraseña
   role      UserRole @default(CLIENT)
+
+  // --- Autenticación con proveedores externos (OAuth) ---
+  provider  String   @default("local") // "local" | "google"
+  googleId  String?  @unique           // ID de Google (claim `sub`) si se vinculó la cuenta
+
+  // --- Aceptación de términos y condiciones ---
+  acceptedTermsAt DateTime?
+
+  // --- Recuperación de contraseña ---
+  // Se almacena el HASH (sha256) del token, nunca el token en claro.
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   favorites Favorite[]
